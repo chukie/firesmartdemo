@@ -1,5 +1,9 @@
 var querystring = require('querystring');
 var https = require('https');
+var env = require('dotenv');
+
+
+var bearer = env.access_key
 
 
 //http.get
@@ -53,7 +57,7 @@ function SendDatatoSafeTrek(builtrequest)
         headers: {
             'Content-Type': 'application/json',
             'Content-Length': Buffer.byteLength(builtrequest),
-            'Authorization' : "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Ik5FWTBPVVV3TVRSRU5qUTRSVUZDTkVJd01rUTBSVEUwUVRJMFF6ZzRSVGc1T0RBMFJEWXhOUSJ9.eyJodHRwOi8vY2xpZW50LW5hbWUiOiJDT0xMRUdFX0RFVkVMT1BFUl9QUk9HUkFNIiwiaXNzIjoiaHR0cHM6Ly9sb2dpbi1zYW5kYm94LnNhZmV0cmVrLmlvLyIsInN1YiI6InNtc3w1YWU0OTZhYWE2ODAzYTkxOTEzNWRiNDYiLCJhdWQiOlsiaHR0cHM6Ly9hcGktc2FuZGJveC5zYWZldHJlay5pbyIsImh0dHBzOi8vc2FmZXRyZWstc2FuZGJveC5hdXRoMC5jb20vdXNlcmluZm8iXSwiaWF0IjoxNTI1MTg0NDE2LCJleHAiOjE1MjUyMjA0MTYsImF6cCI6ImdrMW5GdGJRcjRwQnBKRDByekFwM3ZhU2k1NTVzbTRzIiwic2NvcGUiOiJvcGVuaWQgcGhvbmUgb2ZmbGluZV9hY2Nlc3MifQ.RP0amuwg3vpFdG0_UEBhGppYzRYAk2F8dp972kN0httci5zgo8U1aqcNvGy3AWODRvTiQ5k6ykBeW-_HhzrgY5l8HwUw_W6fxCSBkPgBLd7ODl6u8qd-Bj05BwUCHhbivnAYNACI9qZiO9HTsG7CfP4-zg5Xvf76pf-jXNofZq_wZzQuN3IYwLYETr10UlenJw7UC3rsjp-bO2lRaUbtGhkCdLEUihLyGzrReByeQy9iOXQRpw4SiOcNACWKC4yknIoRipT0DUK3jIT2goQ6RfPX7hmpkYzd4RY_y0tsUd5wmpxH6wmcYs6oDUXGU7qPgWdFohrKU8NLNJhkWnT3aQ"
+            'Authorization' : env.ACCESS_TOKEN || ''
         }
 
     }
