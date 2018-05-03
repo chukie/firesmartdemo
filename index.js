@@ -4,7 +4,7 @@ var env = require('dotenv').config();
 //console.log(process.env.game);
 
 
-const port = 3670;
+const port = 5000;
 const hostname = '127.0.0.1'
 
 
@@ -319,7 +319,7 @@ function procesuserjsonrequest()
 
 
 
-server.listen(port,hostname, () => {
+server.listen(port, () => {
 console.log('server running');
 });
 
