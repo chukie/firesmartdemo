@@ -1,10 +1,9 @@
 http = require('http');
 var env = require('dotenv').config();
 
-//console.log(process.env.game);
 
 
-const port = process.env.PORT || 5000;
+//const port = process.env.PORT || 5000;
 
 
 // set the server to accept only json request
@@ -15,7 +14,10 @@ var formalrequesttype = null;
 const server = http.createServer(function (req,res) {
 
 
-    var requestdata = '{"userkey":"wfwrgegttrhrthr","requesttype":"cancelalarm","uservalue":"true"}';
+    var requestdata = '';
+
+    //{"userkey":"wfwrgegttrhrthr","requesttype":"temperature"}
+
 
     var advancedverifcareq = false ; // this is used to check if the advanced validation acess required
 
@@ -42,6 +44,10 @@ const server = http.createServer(function (req,res) {
     }
 
     */
+    req.on('data' , function data(datafromweb){
+        requestdata += datafromweb;
+
+    })
 
     if(req.url=="/")
     {
@@ -85,6 +91,17 @@ const server = http.createServer(function (req,res) {
 
     if(startvalidation)
     {
+        if(requestdata.length==0)
+        {
+            console.log('BAD BOY')
+            requestdata  = '{"userkey":"wfwrgegttrhrthr","requesttype":"temperature"}';
+        }
+        else
+        {
+
+        }
+
+
         var validationcode = extractjsondata(requestdata);
 
 
@@ -256,17 +273,10 @@ function procesuserjsonrequest()
 
     if(formalrequesttype=="access")
         {
-            if(puserdata.requesttype=="temperature")
-            {
-                result = '{"result":' + currentdata.temperature + '}';
             // reads data
-            return result;
-            }
-            else
-            {
-                result = '{"result":' + currentdata.alarmstatus + '}';
+                result = '{"temperature":"' + currentdata.temperature + '","alarmstatus":"' + currentdata.alarmstatus + '"}';
                 return result;
-            }
+
         }
      else if(formalrequesttype=="insert")
     {
@@ -318,7 +328,7 @@ function procesuserjsonrequest()
 
 
 
-server.listen(port, () => {
+server.listen(5000,"127.0.0.1",() => {
 console.log('server running');
 });
 
