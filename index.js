@@ -3,7 +3,7 @@ var env = require('dotenv').config();
 
 
 
-//const port = process.env.PORT || 5000;
+const port = process.env.PORT || 5000;
 
 
 // set the server to accept only json request
@@ -328,7 +328,7 @@ function procesuserjsonrequest()
 
 
 
-server.listen(5000,"127.0.0.1",() => {
+server.listen(port,() => {
 console.log('server running');
 });
 
