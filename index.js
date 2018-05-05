@@ -94,7 +94,7 @@ const server = http.createServer(function (req,res) {
         if(requestdata.length==0)
         {
             console.log('BAD BOY')
-            requestdata  = '{"userkey":"wfwrgegttrhrthr","requesttype":"temperature"}';
+            requestdata  = '{"userkey":"wfwrgegttrhrthr","requesttype":"cancelalarm","uservalue":"true"}';
         }
         else
         {
@@ -283,7 +283,7 @@ function procesuserjsonrequest()
         if(puserdata.requesttype=="temperature")
         {
             currentdata.temperature=puserdata.uservalue;
-            result = JSON.stringify(currentdata);
+            result = '{"value":"11"}';
             //console.log(result);
 
             //before returnin result send data to aws or redis storage
@@ -292,7 +292,7 @@ function procesuserjsonrequest()
         else if(puserdata.requesttype=="alarmstatus")
         {
             currentdata.alarmstatus=puserdata.uservalue;
-            result = JSON.stringify(currentdata);
+            result = '{"value":"11"}';
 
             //before returnin result send data to aws or redis storage
             return result;
@@ -316,10 +316,9 @@ function procesuserjsonrequest()
         if(puserdata.requesttype=="cancelalarm")
         {
             currentdata.cancelalarm=puserdata.uservalue;
-            result = JSON.stringify(currentdata);
+            result = '{"value":"11"}';
             //before returnin result send data to aws or redis storage
             return result;
-
 
         }
     }
