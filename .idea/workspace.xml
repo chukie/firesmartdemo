@@ -29,8 +29,8 @@
       <file leaf-file-name="index.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/index.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="473">
-              <caret line="96" column="102" selection-start-line="96" selection-start-column="102" selection-end-line="96" selection-end-column="102" />
+            <state relative-caret-position="365">
+              <caret line="270" column="73" selection-start-line="270" selection-start-column="73" selection-end-line="270" selection-end-column="73" />
             </state>
           </provider>
         </entry>
@@ -88,6 +88,7 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -99,7 +100,6 @@
           <select />
         </subPane>
       </pane>
-      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -145,12 +145,13 @@
       <workItem from="1525285186059" duration="19588000" />
       <workItem from="1525368110068" duration="1209000" />
       <workItem from="1525488906520" duration="6096000" />
-      <workItem from="1525545433636" duration="1925000" />
+      <workItem from="1525545433636" duration="2888000" />
+      <workItem from="1525601068568" duration="110000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="56329000" />
+    <option name="totallyTimeSpent" value="57402000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="-7" y="-7" width="1550" height="838" extended-state="6" />
@@ -187,6 +188,20 @@
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/run.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1003">
+          <caret line="59" column="52" selection-start-line="59" selection-start-column="52" selection-end-line="59" selection-end-column="52" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/index.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1632">
+          <caret line="96" column="102" selection-start-line="96" selection-start-column="102" selection-end-line="96" selection-end-column="102" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/run.js">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1003">
@@ -280,8 +295,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/index.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="473">
-          <caret line="96" column="102" selection-start-line="96" selection-start-column="102" selection-end-line="96" selection-end-column="102" />
+        <state relative-caret-position="365">
+          <caret line="270" column="73" selection-start-line="270" selection-start-column="73" selection-end-line="270" selection-end-column="73" />
         </state>
       </provider>
     </entry>

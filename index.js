@@ -268,7 +268,7 @@ function procesuserjsonrequest()
 // this codes checks wants the user wants from the database and returns the result
 // this should be a client call to amazon aws or redis service in which json file is downloaded as a string and parsed
 
-    var currentdata = JSON.parse('{"temperature":"67.9","alarmstatus":"off","useraddress":{"line":"403 torry avenue","city":"bronx","userstate":"newyork","zipcode":"10473"},"cancelalarm":"false"}')
+    var currentdata = JSON.parse('{"temperature":"67.9","alarmstatus":"on","useraddress":{"line":"403 torry avenue","city":"bronx","userstate":"newyork","zipcode":"10473"},"cancelalarm":"false"}')
     var result = "";
 
     if(formalrequesttype=="access")
