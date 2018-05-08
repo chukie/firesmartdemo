@@ -87,7 +87,7 @@ const server = http.createServer(function (req,res) {
 
     req.on('data' , function data(datafromweb){
         requestdatatest += datafromweb;
-        console.log(datafromweb);
+        console.log(datafromweb.toString('utf8'));
 
     })
 
