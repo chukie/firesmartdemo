@@ -87,20 +87,15 @@ const server = http.createServer(function (req,res) {
             req.connection.destroy();
         }
 
-        req.on('data', function data(datafromweb) {
-            requestdatatest += datafromweb;
-            console.log(datafromweb.toString('utf8'));
-
-        })
 
 
         if (startvalidation) {
             if (requestdatatest.length == 0) {
-                console.log('BAD BOY')
+                console.log('Default')
                 requestdata = '{"userkey":"wfwrgegttrhrthr","requesttype":"address","useraddress":{"line":"wfwrgegttrhrthr","city":"fverge","userstate":"wfwrgegttrhrthr","zipcode":"address"}}';
             }
             else {
-                console.log("Good boy");
+                console.log("userset");
                 requestdata = requestdatatest;
             }
 
