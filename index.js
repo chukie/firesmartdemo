@@ -180,7 +180,7 @@ function extractjsondata(userdata)
     {
         keydefined == false;
     }
-    else if(puserdata.requesttype.toString()==undefined || puserdata.requesttype.toString()!= "alarmstatus" || puserdata.requesttype.toString()!= "temperature" || puserdata.requesttype.toString()!= "address" || puserdata.requesttype.toString()!= "wifi"  || puserdata.requesttype.toString()!= "cancelalarm" || puserdata.requesttype.toString()!= "call911")
+    else if(typeof puserdata.requesttype === 'undefined' || puserdata.requesttype.toString()!= "alarmstatus" || puserdata.requesttype.toString()!= "temperature" || puserdata.requesttype.toString()!= "address" || puserdata.requesttype.toString()!= "wifi"  || puserdata.requesttype.toString()!= "cancelalarm" || puserdata.requesttype.toString()!= "call911")
     {
         typedefined== false;
     }
@@ -304,7 +304,7 @@ function procesuserjsonrequest()
             currentdata.useraddress.userstate=puserdata.useraddress.userstate;
             currentdata.useraddress.zipcode=puserdata.useraddress.zipcode;
 
-            result = JSON.stringify(currentdata);
+            result = '{"value":"11"}';
 
             //before returnin result send data to aws or redis storage
             return result;
