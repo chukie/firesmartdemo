@@ -137,7 +137,7 @@ const server = http.createServer(function (req,res) {
             else
             {
                 // if advanced validation is required pocess the request
-                console.log(requestdatatest);
+                console.log("this is the post dat " + requestdatatest.toString());
                 jsonuserresponse = procesuserjsonrequest();
                 responseready = true;
 
