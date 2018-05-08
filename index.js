@@ -47,7 +47,14 @@ const server = http.createServer(function (req,res) {
 
     */
 
-    requestdatatest = req.body;
+    if(typeof req.body=== 'undefined')
+    {
+        requestdatatest = "";
+    }
+    else
+    {
+
+    }
     console.log(requestdatatest);
 
     if(req.url=="/")
