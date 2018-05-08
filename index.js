@@ -94,7 +94,7 @@ const server = http.createServer(function (req,res) {
         if(requestdata.length==0)
         {
             console.log('BAD BOY')
-            requestdata  = '{"userkey":"wfwrgegttrhrthr","requesttype":"cancelalarm","uservalue":"true"}';
+            requestdata  = '{"userkey":"wfwrgegttrhrthr","requesttype":"address","useraddress":{"line":"wfwrgegttrhrthr","city":"fverge","userstate":"wfwrgegttrhrthr","zipcode":"address"}}';
         }
         else
         {
