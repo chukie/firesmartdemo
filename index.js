@@ -47,131 +47,118 @@ const server = http.createServer(function (req,res) {
 
     */
 
-    if(typeof req.body=== 'undefined')
-    {
-        requestdatatest = "";
-    }
-    else
-    {
+    req.on('data', chunk => {
+        body += chunk.toString(); // convert Buffer to string
+    });
+    req.on('end', () => {
+        console.log("in your face");
+        dff();
+    });
 
-    }
-    console.log(requestdatatest);
-
-    if(req.url=="/")
-    {
-        res.statusCode = 200;
-        res.setHeader('Content-Type', 'application/json');
-        res.end('{"Connected":"server is working !! , use post to make a request "}');
-        req.connection.destroy();
-    }
-    else if (req.url=='/access/')
-    {
-        formalrequesttype = "access";
-        startvalidation=true;
-    }
-    else if (req.url.toString()=="/insert/")
-    {
+    function dff() {
 
 
-        startvalidation=true;
-        formalrequesttype = "insert";
-        advancedverifcareq = true;
-    }
-    else if(req.url=="/action/")
-    {
-        startvalidation=true;
-        formalrequesttype = "action";
-        advancedverifcareq = true;
-    }
-    else
-    {
-        res.statusCode = 200;
-        res.setHeader('Content-Type', 'text/plain');
-        res.end('wrong url , url cannot be found ');
-        req.connection.destroy();
-    }
-
-    req.on('data' , function data(datafromweb){
-        requestdatatest += datafromweb;
-        console.log(datafromweb.toString('utf8'));
-
-    })
-
-
-    if(startvalidation)
-    {
-        if(requestdatatest.length==0)
-        {
-            console.log('BAD BOY')
-            requestdata  = '{"userkey":"wfwrgegttrhrthr","requesttype":"address","useraddress":{"line":"wfwrgegttrhrthr","city":"fverge","userstate":"wfwrgegttrhrthr","zipcode":"address"}}';
+        if (req.url == "/") {
+            res.statusCode = 200;
+            res.setHeader('Content-Type', 'application/json');
+            res.end('{"Connected":"server is working !! , use post to make a request "}');
+            req.connection.destroy();
         }
-        else
-        {
-            console.log("Good boy");
-            requestdata = requestdatatest;
+        else if (req.url == '/access/') {
+            formalrequesttype = "access";
+            startvalidation = true;
+        }
+        else if (req.url.toString() == "/insert/") {
+
+
+            startvalidation = true;
+            formalrequesttype = "insert";
+            advancedverifcareq = true;
+        }
+        else if (req.url == "/action/") {
+            startvalidation = true;
+            formalrequesttype = "action";
+            advancedverifcareq = true;
+        }
+        else {
+            res.statusCode = 200;
+            res.setHeader('Content-Type', 'text/plain');
+            res.end('wrong url , url cannot be found ');
+            req.connection.destroy();
         }
 
+        req.on('data', function data(datafromweb) {
+            requestdatatest += datafromweb;
+            console.log(datafromweb.toString('utf8'));
 
-        var validationcode = extractjsondata(requestdata);
+        })
 
 
-        // check if the code is validated
-        if(validationcode==99)
-        {
-            jsonuserresponse = '{"error":"There is a problem with your key or the type of request you want to make "}';
-            responseready = true;
-        }
-        else
-        {
-            // take the json data for user validation
-            if(advancedverifcareq)
-            {
+        if (startvalidation) {
+            if (requestdatatest.length == 0) {
+                console.log('BAD BOY')
+                requestdata = '{"userkey":"wfwrgegttrhrthr","requesttype":"address","useraddress":{"line":"wfwrgegttrhrthr","city":"fverge","userstate":"wfwrgegttrhrthr","zipcode":"address"}}';
+            }
+            else {
+                console.log("Good boy");
+                requestdata = requestdatatest;
+            }
 
-                var goahead = advanceduservalidation(puserdata); //bypass this function if its just access
 
-                if(goahead==11)
-                {
+            var validationcode = extractjsondata(requestdata);
+
+
+            // check if the code is validated
+            if (validationcode == 99) {
+                jsonuserresponse = '{"error":"There is a problem with your key or the type of request you want to make "}';
+                responseready = true;
+            }
+            else {
+                // take the json data for user validation
+                if (advancedverifcareq) {
+
+                    var goahead = advanceduservalidation(puserdata); //bypass this function if its just access
+
+                    if (goahead == 11) {
+                        jsonuserresponse = procesuserjsonrequest();
+                        responseready = true;
+                    }
+                    else {
+                        jsonuserresponse = '{"error":"There is a problem with your json values maybe there is one of them is missing or misspelt "}'
+                        responseready = true;
+                    }
+                }
+                else {
+                    // if advanced validation is required pocess the request
+                    console.log("this is the post dat " + requestdatatest.toString());
                     jsonuserresponse = procesuserjsonrequest();
                     responseready = true;
+
                 }
-                else
-                {
-                    jsonuserresponse = '{"error":"There is a problem with your json values maybe there is one of them is missing or misspelt "}'
-                    responseready = true;
-                }
-            }
-            else
-            {
-                // if advanced validation is required pocess the request
-                console.log("this is the post dat " + requestdatatest.toString());
-                jsonuserresponse = procesuserjsonrequest();
-                responseready = true;
 
             }
-
         }
-    }
 
-            // reply the client with response
-            //make sure the result is ready because of the callback chain
-            if(jsonuserresponse!=null)
-            {
+        // reply the client with response
+        //make sure the result is ready because of the callback chain
+        if (jsonuserresponse != null) {
 
-                if(responseready)
-                {
-                    res.statusCode = 200;
-                    res.setHeader('Content-Type', 'application/json');
-                    res.end(jsonuserresponse);
-                    req.connection.destroy();
-                }
-                else
-                {
+            if (responseready) {
+                res.statusCode = 200;
+                res.setHeader('Content-Type', 'application/json');
+                res.end(jsonuserresponse);
+                req.connection.destroy();
+            }
+            else {
                 res.statusCode = 200;
                 res.setHeader('Content-Type', 'application/json');
                 res.end('{"error":"an error occured"}');
                 req.connection.destroy();
-                }
             }
+        }
+
+
+    }
 
 
 });
