@@ -51,7 +51,6 @@ const server = http.createServer(function (req,res) {
         requestdatatest += chunk.toString(); // convert Buffer to string
     });
     req.on('end', () => {
-        console.log("in your face" + requestdatatest);
         dff();
     });
 
