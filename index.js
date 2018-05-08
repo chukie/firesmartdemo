@@ -46,10 +46,9 @@ const server = http.createServer(function (req,res) {
     }
 
     */
-    req.on('data' , function data(datafromweb){
-        requestdata += datafromweb;
 
-    })
+    requestdatatest = req.body;
+    console.log(requestdatatest);
 
     if(req.url=="/")
     {
