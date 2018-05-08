@@ -85,6 +85,7 @@ const server = http.createServer(function (req,res) {
 
     req.on('data' , function data(datafromweb){
         requestdata += datafromweb;
+        console.log(datafromweb);
 
     })
 
