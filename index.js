@@ -48,10 +48,10 @@ const server = http.createServer(function (req,res) {
     */
 
     req.on('data', chunk => {
-        body += chunk.toString(); // convert Buffer to string
+        requestdatatest += chunk.toString(); // convert Buffer to string
     });
     req.on('end', () => {
-        console.log("in your face");
+        console.log("in your face" + requestdatatest);
         dff();
     });
 
@@ -130,7 +130,7 @@ const server = http.createServer(function (req,res) {
                 }
                 else {
                     // if advanced validation is required pocess the request
-                    console.log("this is the post dat " + requestdatatest.toString());
+                    //console.log("this is the post dat " + requestdatatest.toString());
                     jsonuserresponse = procesuserjsonrequest();
                     responseready = true;
 
