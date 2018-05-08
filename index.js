@@ -16,6 +16,8 @@ const server = http.createServer(function (req,res) {
 
     var requestdata = '';
 
+    var requestdatatest = '';
+
     //{"userkey":"wfwrgegttrhrthr","requesttype":"temperature"}
 
 
@@ -84,7 +86,7 @@ const server = http.createServer(function (req,res) {
     }
 
     req.on('data' , function data(datafromweb){
-        requestdata += datafromweb;
+        requestdatatest += datafromweb;
         console.log(datafromweb);
 
     })
@@ -92,14 +94,15 @@ const server = http.createServer(function (req,res) {
 
     if(startvalidation)
     {
-        if(requestdata.length==0)
+        if(requestdatatest.length==0)
         {
             console.log('BAD BOY')
             requestdata  = '{"userkey":"wfwrgegttrhrthr","requesttype":"address","useraddress":{"line":"wfwrgegttrhrthr","city":"fverge","userstate":"wfwrgegttrhrthr","zipcode":"address"}}';
         }
         else
         {
-
+            console.log("Good boy");
+            requestdata = requestdatatest;
         }
 
 
@@ -134,6 +137,7 @@ const server = http.createServer(function (req,res) {
             else
             {
                 // if advanced validation is required pocess the request
+                console.log(requestdatatest);
                 jsonuserresponse = procesuserjsonrequest();
                 responseready = true;
 
