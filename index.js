@@ -5,14 +5,14 @@ var AWS = require('aws-sdk');
 
 
 const port = process.env.PORT || 7000;
+//console.log(process.env.access_kedyid);
 
-/*
+
 AWS.config = new AWS.Config();
-console.log(process.env.ACCESS_KEYID);
-AWS.config.accessKeyId = process.env.ACCESS_KEYID;
-AWS.config.secretAccessKey = process.env.SECRETACCESSKEY;
+AWS.config.accessKeyId = process.env.access_kedyid;
+AWS.config.secretAccessKey = process.env.secretaccesskey;
 
-*/
+
 
 var s3 = new AWS.S3();
 
@@ -400,7 +400,7 @@ function advanceduservalidation(userreqjsonobject) {
 
 
 
-server.listen(port,() => {
+server.listen(5000,() => {
 console.log('server running');
 });
 
