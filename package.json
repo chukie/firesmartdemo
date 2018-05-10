@@ -9,6 +9,7 @@
   "author": "chukwudi udoka",
   "license": "ISC",
   "dependencies": {
+    "aws-sdk": "^2.236.1",
     "dotenv": "^5.0.1",
     "npm": "6.0.0"
   },

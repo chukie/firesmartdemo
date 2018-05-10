@@ -1,5 +1,6 @@
 http = require('http');
 var env = require('dotenv').config();
+var AWS = require('aws-sdk');
 
 
 
@@ -106,6 +107,7 @@ const server = http.createServer(function (req,res) {
             if (validationcode == 99) {
                 jsonuserresponse = '{"error":"There is a problem with your key or the type of request you want to make "}';
                 responseready = true;
+                sendanswer(99,jsonuserresponse);
             }
             else {
                 // take the json data for user validation
@@ -114,24 +116,118 @@ const server = http.createServer(function (req,res) {
                     var goahead = advanceduservalidation(puserdata); //bypass this function if its just access
 
                     if (goahead == 11) {
-                        jsonuserresponse = procesuserjsonrequest();
+                        procesuserjsonrequest();
                         responseready = true;
                     }
                     else {
                         jsonuserresponse = '{"error":"There is a problem with your json values maybe there is one of them is missing or misspelt "}'
                         responseready = true;
+                        sendanswer(99,jsonuserresponse);
                     }
                 }
                 else {
                     // if advanced validation is required pocess the request
                     //console.log("this is the post dat " + requestdatatest.toString());
-                    jsonuserresponse = procesuserjsonrequest();
+                    procesuserjsonrequest();
                     responseready = true;
 
                 }
 
             }
         }
+
+
+        function procesuserjsonrequest()
+        {
+// this codes checks wants the user wants from the database and returns the result
+// this should be a client call to amazon aws or redis service in which json file is downloaded as a string and parsed
+
+            //var s3 = new AWS.S3();
+            var currentdata = '';
+            var result = "";
+                if (err)
+                {
+                    console.log(err, err.stack);
+                    sendanswer(99,"there is an error with aws service ");
+                }// an error occurred
+                else
+                {
+                    // handle when the data is sent
+                    if(formalrequesttype=="access")
+                    {
+                        // reads data
+                        result = '{"temperature":"' + currentdata.temperature + '","alarmstatus":"' + currentdata.alarmstatus + '"}';
+                        sendanswer(11,result);
+
+                    }
+
+                    else if(formalrequesttype=="insert")
+                    {
+                        if(puserdata.requesttype=="temperature")
+                        {
+                            currentdata.temperature=puserdata.uservalue;
+                            result = '{"value":"11"}';
+                            //console.log(result);
+
+                            //before returnin result send data to aws or redis storage
+                            sendanswer(11,result);
+                        }
+                        else if(puserdata.requesttype=="alarmstatus")
+                        {
+                            currentdata.alarmstatus=puserdata.uservalue;
+                            result = '{"value":"11"}';
+
+                            //before returnin result send data to aws or redis storage
+                            sendanswer(11,result);
+                        }
+                        else if(puserdata.requesttype=="address")
+                        {
+                            currentdata.useraddress.line=puserdata.useraddress.line;
+                            currentdata.useraddress.city=puserdata.useraddress.city;
+                            currentdata.useraddress.userstate=puserdata.useraddress.userstate;
+                            currentdata.useraddress.zipcode=puserdata.useraddress.zipcode;
+
+                            result = '{"value":"11"}';
+
+                            //before returnin result send data to aws or redis storage
+                            sendanswer(11,result);
+                        }
+
+                    }
+                    else
+                    {
+                        if(puserdata.requesttype=="cancelalarm")
+                        {
+                            currentdata.cancelalarm=puserdata.uservalue;
+                            result = '{"value":"11"}';
+                            //before returnin result send data to aws or redis storage
+                            sendanswer(11,result);
+
+                        }
+                    }
+
+
+                }
+
+
+        }
+
+        function sendanswer(inid,data)
+        {
+            if (responseready) {
+                res.statusCode = 200;
+                res.setHeader('Content-Type', 'application/json');
+                res.end(data);
+                req.connection.destroy();
+            }
+            else {
+                res.statusCode = 200;
+                res.setHeader('Content-Type', 'application/json');
+                res.end('{"error":"an error occured"}');
+                req.connection.destroy();
+            }
+        }
+
 
         // reply the client with response
         //make sure the result is ready because of the callback chain
@@ -254,68 +350,8 @@ function advanceduservalidation(userreqjsonobject) {
 }
 
 
-// connect to the web json database
-function procesuserjsonrequest()
-{
-// this codes checks wants the user wants from the database and returns the result
-// this should be a client call to amazon aws or redis service in which json file is downloaded as a string and parsed
 
-    var currentdata = JSON.parse('{"temperature":"67.9","alarmstatus":"on","useraddress":{"line":"403 torry avenue","city":"bronx","userstate":"newyork","zipcode":"10473"},"cancelalarm":"false"}')
-    var result = "";
 
-    if(formalrequesttype=="access")
-        {
-            // reads data
-                result = '{"temperature":"' + currentdata.temperature + '","alarmstatus":"' + currentdata.alarmstatus + '"}';
-                return result;
-
-        }
-     else if(formalrequesttype=="insert")
-    {
-        if(puserdata.requesttype=="temperature")
-        {
-            currentdata.temperature=puserdata.uservalue;
-            result = '{"value":"11"}';
-            //console.log(result);
-
-            //before returnin result send data to aws or redis storage
-            return result;
-        }
-        else if(puserdata.requesttype=="alarmstatus")
-        {
-            currentdata.alarmstatus=puserdata.uservalue;
-            result = '{"value":"11"}';
-
-            //before returnin result send data to aws or redis storage
-            return result;
-        }
-        else if(puserdata.requesttype=="address")
-        {
-            currentdata.useraddress.line=puserdata.useraddress.line;
-            currentdata.useraddress.city=puserdata.useraddress.city;
-            currentdata.useraddress.userstate=puserdata.useraddress.userstate;
-            currentdata.useraddress.zipcode=puserdata.useraddress.zipcode;
-
-            result = '{"value":"11"}';
-
-            //before returnin result send data to aws or redis storage
-            return result;
-        }
-
-    }
-    else
-    {
-        if(puserdata.requesttype=="cancelalarm")
-        {
-            currentdata.cancelalarm=puserdata.uservalue;
-            result = '{"value":"11"}';
-            //before returnin result send data to aws or redis storage
-            return result;
-
-        }
-    }
-
-}
 
 
 
