@@ -116,8 +116,9 @@ const server = http.createServer(function (req,res) {
                     var goahead = advanceduservalidation(puserdata); //bypass this function if its just access
 
                     if (goahead == 11) {
-                        procesuserjsonrequest();
                         responseready = true;
+                        procesuserjsonrequest();
+
                     }
                     else {
                         jsonuserresponse = '{"error":"There is a problem with your json values maybe there is one of them is missing or misspelt "}'
@@ -128,8 +129,9 @@ const server = http.createServer(function (req,res) {
                 else {
                     // if advanced validation is required pocess the request
                     //console.log("this is the post dat " + requestdatatest.toString());
-                    procesuserjsonrequest();
                     responseready = true;
+                    procesuserjsonrequest();
+
 
                 }
 
