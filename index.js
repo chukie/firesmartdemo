@@ -143,15 +143,9 @@ const server = http.createServer(function (req,res) {
 // this should be a client call to amazon aws or redis service in which json file is downloaded as a string and parsed
 
             //var s3 = new AWS.S3();
-            var currentdata = '';
+            var currentdata = JSON.parse('{"temperature":"67.9","alarmstatus":"off","useraddress":{"line":"403 torry avenue","city":"bronx","userstate":"newyork","zipcode":"10473"},"cancelalarm":"false"}');
             var result = "";
-                if (err)
-                {
-                    console.log(err, err.stack);
-                    sendanswer(99,"there is an error with aws service ");
-                }// an error occurred
-                else
-                {
+
                     // handle when the data is sent
                     if(formalrequesttype=="access")
                     {
@@ -206,8 +200,6 @@ const server = http.createServer(function (req,res) {
                         }
                     }
 
-
-                }
 
 
         }
