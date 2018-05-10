@@ -92,7 +92,7 @@ const server = http.createServer(function (req,res) {
         if (startvalidation) {
             if (requestdatatest.length == 0) {
                 console.log('Default')
-                requestdata = '{"userkey":"wfwrgegttrhrthr","requesttype":"address","useraddress":{"line":"wfwrgegttrhrthr","city":"fverge","userstate":"wfwrgegttrhrthr","zipcode":"address"}}';
+                requestdata = '{"userkey":"wfwrgegttrhrthr","requesttype":"cancelalarm","useraddress":{"line":"wfwrgegttrhrthr","city":"fverge","userstate":"wfwrgegttrhrthr","zipcode":"address"},"cancelalarm":"false"}';
             }
             else {
                 console.log("userset");
@@ -306,7 +306,7 @@ function advanceduservalidation(userreqjsonobject) {
         }
     }
 
-    else if (userreqjsonobject.requesttype == "address") {
+    else if (userreqjsonobject.requesttype.toString() == "address") {
         //make sure the address is not empty and validate if the adress details have instatitize
         if (typeof userreqjsonobject.useraddress === 'undefined')
         {
