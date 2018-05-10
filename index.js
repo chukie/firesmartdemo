@@ -4,7 +4,19 @@ var AWS = require('aws-sdk');
 
 
 
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 7000;
+
+/*
+AWS.config = new AWS.Config();
+console.log(process.env.ACCESS_KEYID);
+AWS.config.accessKeyId = process.env.ACCESS_KEYID;
+AWS.config.secretAccessKey = process.env.SECRETACCESSKEY;
+
+*/
+
+var s3 = new AWS.S3();
+
+var params = {Bucket: "firesmartdemodb",Key: 'defaultdabase.json'};
 
 
 // set the server to accept only json request
@@ -92,7 +104,7 @@ const server = http.createServer(function (req,res) {
         if (startvalidation) {
             if (requestdatatest.length == 0) {
                 console.log('Default')
-                requestdata = '{"userkey":"wfwrgegttrhrthr","requesttype":"cancelalarm","useraddress":{"line":"wfwrgegttrhrthr","city":"fverge","userstate":"wfwrgegttrhrthr","zipcode":"address"},"cancelalarm":"false"}';
+                requestdata = '{"userkey":"wfwrgegttrhrthr","requesttype":"cancelalarm","uservalue":"off","useraddress":{"line":"wfwrgegttrhrthr","city":"fverge","userstate":"wfwrgegttrhrthr","zipcode":"address"},"cancelalarm":"false"}';
             }
             else {
                 console.log("userset");
@@ -139,19 +151,36 @@ const server = http.createServer(function (req,res) {
         }
 
 
+        function getdatafromaws()
+        {
+            //this data gets result from aws
+
+        }
+
+
         function procesuserjsonrequest()
         {
 // this codes checks wants the user wants from the database and returns the result
 // this should be a client call to amazon aws or redis service in which json file is downloaded as a string and parsed
 
             //var s3 = new AWS.S3();
-            var currentdata = JSON.parse('{"temperature":"67.9","alarmstatus":"off","useraddress":{"line":"403 torry avenue","city":"bronx","userstate":"newyork","zipcode":"10473"},"cancelalarm":"false"}');
+            var currentdata = "";
+                //JSON.parse('{"temperature":"67.9","alarmstatus":"off","useraddress":{"line":"403 torry avenue","city":"bronx","userstate":"newyork","zipcode":"10473"},"cancelalarm":"false"}');
             var result = "";
 
-                    // handle when the data is sent
+            s3.getObject(params, function(err, data) {
+                if (err) {
+                    console.log(err, err.stack);
+                    console.log("bad");
+                    result = "couldnt connect to aws";
+                    sendanswer(99,result);
+                }
+                else {
+                    currentdata = JSON.parse(data.Body.toString());
                     if(formalrequesttype=="access")
                     {
                         // reads data
+
                         result = '{"temperature":"' + currentdata.temperature + '","alarmstatus":"' + currentdata.alarmstatus + '"}';
                         sendanswer(11,result);
 
@@ -162,19 +191,35 @@ const server = http.createServer(function (req,res) {
                         if(puserdata.requesttype=="temperature")
                         {
                             currentdata.temperature=puserdata.uservalue;
-                            result = '{"value":"11"}';
-                            //console.log(result);
+                            s3.putObject({Bucket: 'firesmartdemodb',Key: 'defaultdabase.json',Body: JSON.stringify(currentdata), ContentType: "application/json"},
+                                function(err,data){
+                                    if(err)
+                                    {
+                                        sendanswer(99,"could not connect to amazon aws");
+                                    }
+                                    else
+                                    {
+                                        result = '{"value":"11"}';
+                                        sendanswer(11,result);
+                                    }
+                                });
 
-                            //before returnin result send data to aws or redis storage
-                            sendanswer(11,result);
                         }
                         else if(puserdata.requesttype=="alarmstatus")
                         {
                             currentdata.alarmstatus=puserdata.uservalue;
-                            result = '{"value":"11"}';
-
-                            //before returnin result send data to aws or redis storage
-                            sendanswer(11,result);
+                            s3.putObject({Bucket: 'firesmartdemodb',Key: 'defaultdabase.json',Body: JSON.stringify(currentdata), ContentType: "application/json"},
+                                function(err,data){
+                                    if(err)
+                                    {
+                                        sendanswer(99,"could not connect to amazon aws");
+                                    }
+                                    else
+                                    {
+                                        result = '{"value":"11"}';
+                                        sendanswer(11,result);
+                                    }
+                                });
                         }
                         else if(puserdata.requesttype=="address")
                         {
@@ -183,10 +228,18 @@ const server = http.createServer(function (req,res) {
                             currentdata.useraddress.userstate=puserdata.useraddress.userstate;
                             currentdata.useraddress.zipcode=puserdata.useraddress.zipcode;
 
-                            result = '{"value":"11"}';
-
-                            //before returnin result send data to aws or redis storage
-                            sendanswer(11,result);
+                            s3.putObject({Bucket: 'firesmartdemodb',Key: 'defaultdabase.json',Body: JSON.stringify(currentdata), ContentType: "application/json"},
+                                function(err,data){
+                                    if(err)
+                                    {
+                                        sendanswer(99,"could not connect to amazon aws");
+                                    }
+                                    else
+                                    {
+                                        result = '{"value":"11"}';
+                                        sendanswer(11,result);
+                                    }
+                                });
                         }
 
                     }
@@ -195,14 +248,28 @@ const server = http.createServer(function (req,res) {
                         if(puserdata.requesttype=="cancelalarm")
                         {
                             currentdata.cancelalarm=puserdata.uservalue;
-                            result = '{"value":"11"}';
-                            //before returnin result send data to aws or redis storage
-                            sendanswer(11,result);
+                            s3.putObject({Bucket: 'firesmartdemodb',Key: 'defaultdabase.json',Body: JSON.stringify(currentdata), ContentType: "application/json"},
+                                function(err,data){
+                                    if(err)
+                                    {
+                                        sendanswer(99,"could not connect to amazon aws");
+                                    }
+                                    else
+                                    {
+                                        result = '{"value":"11"}';
+                                        sendanswer(11,result);
+                                    }
+                                });
 
                         }
                     }
 
 
+                }
+
+            });
+
+                    // handle when the data is sent
 
         }
 
@@ -225,22 +292,6 @@ const server = http.createServer(function (req,res) {
 
         // reply the client with response
         //make sure the result is ready because of the callback chain
-        if (jsonuserresponse != null) {
-
-            if (responseready) {
-                res.statusCode = 200;
-                res.setHeader('Content-Type', 'application/json');
-                res.end(jsonuserresponse);
-                req.connection.destroy();
-            }
-            else {
-                res.statusCode = 200;
-                res.setHeader('Content-Type', 'application/json');
-                res.end('{"error":"an error occured"}');
-                req.connection.destroy();
-            }
-        }
-
 
     }
 
@@ -349,7 +400,7 @@ function advanceduservalidation(userreqjsonobject) {
 
 
 
-server.listen(port,() => {
+server.listen(5000,() => {
 console.log('server running');
 });
 
