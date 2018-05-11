@@ -10,8 +10,8 @@ console.log(process.env.S3_SECRET);
 
 
 AWS.config = new AWS.Config();
-AWS.config.accessKeyId = process.env.ACCESS_KEYID;
-AWS.config.secretAccessKey = process.env.SECRETACCESSKEY;
+AWS.config.accessKeyId = process.env.S3_KEY;
+AWS.config.secretAccessKey = process.env.S3_SECRET;
 
 
 
