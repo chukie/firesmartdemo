@@ -5,8 +5,8 @@ var AWS = require('aws-sdk');
 
 
 const port = process.env.PORT || 5000;
-console.log(process.env.access_keyid);
-console.log(process.env.secretaccesskey);
+//console.log(process.env.GAME);
+console.log(process.env.S3_SECRET);
 
 
 AWS.config = new AWS.Config();
