@@ -79,7 +79,7 @@ const server = http.createServer(function (req,res) {
             res.statusCode = 200;
             res.setHeader('Content-Type', 'application/json');
             res.end('{"Connected":"server is working !! , use post to make a request "}');
-            req.connection.destroy();
+            //req.connection.destroy();
         }
         else if (req.url == '/access/') {
             formalrequesttype = "access";
