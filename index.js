@@ -1,4 +1,5 @@
-http = require('http');
+var http = require('http');
+var url = require('url');
 var env = require('dotenv').config();
 var AWS = require('aws-sdk');
 
@@ -43,23 +44,25 @@ const server = http.createServer(function (req,res) {
 
     var responseready = false;
 
+    var reqtype = null;
+
     //console.log(req.method);
     //console.log(req.headers);
    // res.statusCode = 200;
    // res.setHeader('Content-Type', 'text/plain');
    // res.end('Hello World\n');
 
-    /*
+
     if(req.method=='POST')
     {
-        console.log('not a post request');
-         res.statusCode = 200;
-         res.setHeader('Content-Type', 'text/plain');
-         res.end('Hello World\n');
-         req.connection.destroy();
+        reqtype = false;
     }
 
-    */
+    if(req.method=='GET')
+    {
+        reqtype = true;
+    }
+
 
     req.on('data', chunk => {
         requestdatatest += chunk.toString(); // convert Buffer to string
@@ -69,6 +72,7 @@ const server = http.createServer(function (req,res) {
     });
 
     function dff() {
+
 
 
         if (req.url == "/") {
@@ -93,19 +97,85 @@ const server = http.createServer(function (req,res) {
             formalrequesttype = "action";
             advancedverifcareq = true;
         }
-        else {
-            res.statusCode = 200;
-            res.setHeader('Content-Type', 'text/plain');
-            res.end('wrong url , url cannot be found ');
-            req.connection.destroy();
+        else
+        {
+            var query  = url.parse(req.url,true);
+            var modes = query.query;
+            if(typeof modes.userkey === 'undefined' || typeof modes.requesttype === 'undefined')
+            {
+                responseready = true;
+                sendanswer(99,"userkey has to be defined");
+            }
+            else
+            {
+
+            if(modes.type == "access")
+            {
+
+                formalrequesttype = "access";
+                requestdata = '{"userkey":"' + modes.userkey + '","requesttype":"' + modes.requesttype + '"}';
+                puserdata = JSON.parse(requestdata);
+                responseready = true;
+                procesuserjsonrequest();
+
+            }
+            else if(modes.type == "insert")
+            {
+                if(typeof modes.uservalue === 'undefined')
+                {
+                    responseready = true;
+                    sendanswer(99,"uservalue has to be defined");
+                }
+                else
+                {
+                    formalrequesttype = "insert";
+                    requestdata = '{"userkey":"' + modes.userkey + '","requesttype":"' + modes.requesttype + '","uservalue":"' + modes.uservalue + '"}';
+                    puserdata = JSON.parse(requestdata);
+                    responseready = true;
+                    procesuserjsonrequest();
+                }
+
+            }
+            else if (modes.type == "action")
+            {
+                if(typeof modes.uservalue === 'undefined')
+                {
+                    responseready = true;
+                    sendanswer(99,"uservalue has to be defined");
+                }
+                else {
+                    formalrequesttype = "action";
+                    requestdata = '{"userkey":"' + modes.userkey + '","requesttype":"' + modes.requesttype + '","uservalue":"' + modes.uservalue + '"}';
+                    puserdata = JSON.parse(requestdata);
+                    responseready = true;
+                    procesuserjsonrequest();
+                }
+
+
+            }
+            else
+            {
+                responseready = true;
+                sendanswer(99,"invalid url");
+            }
+            }
+
         }
+
 
 
 
         if (startvalidation) {
             if (requestdatatest.length == 0) {
-                console.log('Default')
-                requestdata = '{"userkey":"wfwrgegttrhrthr","requesttype":"cancelalarm","uservalue":"off","useraddress":{"line":"wfwrgegttrhrthr","city":"fverge","userstate":"wfwrgegttrhrthr","zipcode":"address"},"cancelalarm":"false"}';
+                if(reqtype)
+                {
+
+                    requestdata = '{"userkey":"wfwrgegttrhrthr","requesttype":"cancelalarm","uservalue":"off","useraddress":{"line":"wfwrgegttrhrthr","city":"fverge","userstate":"wfwrgegttrhrthr","zipcode":"address"},"cancelalarm":"false"}';
+                }
+                else {
+                    console.log('Default');
+                    requestdata = '{"userkey":"wfwrgegttrhrthr","requesttype":"cancelalarm","uservalue":"off","useraddress":{"line":"wfwrgegttrhrthr","city":"fverge","userstate":"wfwrgegttrhrthr","zipcode":"address"},"cancelalarm":"false"}';
+                }
             }
             else {
                 console.log("userset");
@@ -166,7 +236,6 @@ const server = http.createServer(function (req,res) {
 
             //var s3 = new AWS.S3();
             var currentdata = "";
-                //JSON.parse('{"temperature":"67.9","alarmstatus":"off","useraddress":{"line":"403 torry avenue","city":"bronx","userstate":"newyork","zipcode":"10473"},"cancelalarm":"false"}');
             var result = "";
 
             s3.getObject(params, function(err, data) {
@@ -401,7 +470,7 @@ function advanceduservalidation(userreqjsonobject) {
 
 
 
-server.listen(port ,() => {
+server.listen(port,() => {
 console.log('server running');
 });
 
