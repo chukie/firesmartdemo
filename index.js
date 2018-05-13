@@ -318,6 +318,7 @@ const server = http.createServer(function (req,res) {
                         if(puserdata.requesttype=="cancelalarm")
                         {
                             currentdata.cancelalarm=puserdata.uservalue;
+                            currentdata.alarmstatus="off";
                             s3.putObject({Bucket: 'firesmartdemodb',Key: 'defaultdabase.json',Body: JSON.stringify(currentdata), ContentType: "application/json"},
                                 function(err,data){
                                     if(err)
