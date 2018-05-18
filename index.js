@@ -371,6 +371,7 @@ const server = http.createServer(function (req,res) {
         function refreshapi()
         {
             var dwd = '{"grant_type" : "refresh_token" , "client_id":"' + process.env.safetrek_clientid + '", "client_secret":"' + process.env.safetrek_clientsecret + '", "refresh_token":"' + process.env.safetrek_refreshtoken + '"}';
+            console.log(dwd);
             dwfwef(dwd);
         }
 
