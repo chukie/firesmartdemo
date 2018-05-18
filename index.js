@@ -1,4 +1,5 @@
 var http = require('http');
+var https = require('https');
 var url = require('url');
 var env = require('dotenv').config();
 var AWS = require('aws-sdk');
@@ -7,11 +8,10 @@ var AWS = require('aws-sdk');
 
 const port = process.env.PORT || 5000;
 //console.log(process.env.GAME);
-console.log(process.env.S3_SECRET);
 
 
 AWS.config = new AWS.Config();
-AWS.config.accessKeyId = process.env.S3_KEY;
+AWS.config.accessKeyId = process.env.S3_KEY
 AWS.config.secretAccessKey = process.env.S3_SECRET;
 
 
@@ -25,6 +25,8 @@ var params = {Bucket: "firesmartdemodb",Key: 'defaultdabase.json'};
 
 var puserdata = null;
 var formalrequesttype = null;
+
+var accesstoken="";
 
 const server = http.createServer(function (req,res) {
 
@@ -327,11 +329,16 @@ const server = http.createServer(function (req,res) {
                                     }
                                     else
                                     {
-                                        result = '{"value":"11"}';
-                                        sendanswer(11,result);
+                                        buildupdaterequest();
+
                                     }
                                 });
 
+                        }
+                        else
+                        {
+                            //beginalarmcreation();
+                            refreshapi()
                         }
                     }
 
@@ -360,14 +367,289 @@ const server = http.createServer(function (req,res) {
             }
         }
 
+        // create a new access token
+        function refreshapi()
+        {
+            var dwd = '{"grant_type" : "refresh_token" , "client_id":"' + process.env.safetrek_clientid + '", "client_secret":"' + process.env.safetrek_clientsecret + '", "refresh_token":"' + process.env.safetrek_refreshtoken + '"}';
+            dwfwef(dwd);
+        }
+
+        function dwfwef(builtrequest)
+        {
+
+            // build the header of the post request
+            var headermessages = {
+                host : "login-sandbox.safetrek.io",
+                port : "443",
+                path : "/oauth/token",
+                method : "post",
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Content-Length': Buffer.byteLength(builtrequest)
+                }
+
+            }
+
+
+            var result = "";
+
+            var sendrequest = https.request(headermessages, function(res) {
+                res.setEncoding('utf8');
+
+                res.on('data', function (chunk) {
+
+                    var tempx = JSON.parse(chunk);
+                    //accesstoken = tempx.acess_token;
+                    //console.log( + "yaaaa");
+                    accesstoken = tempx.access_token
+
+                    if(puserdata.requesttype=="cancelalarm")
+                    {
+                        buildupdaterequest();
+                    }
+                    else
+                    {
+
+                    beginalarmcreation();
+
+                    }
+
+
+                });
+
+
+
+                res.on('error', function (e){
+                    sendanswer(99,"there was a problem");
+                    console.log(e.message);
+                });
+
+            });
+
+
+            sendrequest.write(builtrequest);
+            sendrequest.end();
+        }
+
+
+
+        //
+
 
         // reply the client with response
         //make sure the result is ready because of the callback chain
+
+        // Beginning of create alarm
+        function beginalarmcreation()
+        {
+            s3.getObject(params, function (err, data) {
+                if (err) {
+                    console.log(err, err.stack);
+                    console.log("bad");
+                    usercode = 99;
+                }// an error occurred
+                else {
+                    console.log("calling 911 started");
+                    var datatosend = JSON.parse(data.Body.toString());
+                    buildrequest(datatosend);
+
+                }
+            })
+        }
+        function buildrequest(jsondata)
+        {
+
+            var data = JSON.stringify({
+                "services": {
+                    "police": false,
+                    "fire": true,
+                    "medical": false
+                },
+                "location.address": {
+                    "line1": jsondata.useraddress.line,
+                    "line2": "",
+                    "city": jsondata.useraddress.city,
+                    "state": jsondata.useraddress.userstate,
+                    "zip":  jsondata.useraddress.zipcode,
+                }
+            })
+
+            console.log("success on stringifying data ");
+            SendDatatoSafeTrek(data);
+        }
+
+
+
+// The function senddatatosafetrek api , builds a post request from the arguemnts and sends it to 911 at safetrek api
+
+        function SendDatatoSafeTrek(builtrequest)
+        {
+
+            // build the header of the post request
+            var headermessages = {
+                host : "api-sandbox.safetrek.io",
+                port : "443",
+                path : "/v1/alarms",
+                method : "post",
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Content-Length': Buffer.byteLength(builtrequest),
+                    'Authorization' : "Bearer " + accesstoken
+                }
+
+            }
+
+
+            var result = "";
+
+            var sendrequest = https.request(headermessages, function(res) {
+                res.setEncoding('utf8');
+
+                res.on('data', function (chunk) {
+                    console.log('successfully called 911');
+                    console.log(chunk);
+                    saveidtodatabase(chunk);
+
+                    //buildupdaterequest()
+
+                });
+                res.on('error', function (e){
+                    console.log(e.message);
+                    console.log("it is from the error bro");
+                });
+
+            });
+
+
+            sendrequest.write(builtrequest);
+            sendrequest.end();
+
+        }
+        function saveidtodatabase(jsonstring)
+        {
+            var currentjs = JSON.parse(jsonstring);
+            var datas = '{"alarmid":"' + currentjs.id + '"}';
+            s3.putObject({Bucket: 'firesmartdemodb',Key: 'alarmid.json',Body: datas, ContentType: "application/json"},
+                function(err,data){
+                    if(err)
+                    {
+
+                    }
+                    else
+                    {
+                        var result = '{"11":"Successfully called 911"}';
+                        sendanswer(11,result);
+                        console.log("updated alarm id to current ");
+                    }
+                });
+
+
+        }
+
+
+            // the end of create alarm
+
+
+
+
+
+
+
+
 
     }
 
 
 });
+
+
+
+
+// this is the beginning of the coding of cancel alarm proccess
+
+function buildupdaterequest()
+{
+    var localdata = JSON.stringify({
+        "status": "CANCELED",
+        "pin": "7562"
+    })
+
+    s3.getObject({Bucket: "firesmartdemodb",Key: 'alarmid.json'}, function (err, data) {
+        if (err) {
+            console.log(err, err.stack);
+            console.log("bad");
+            usercode = 99;
+        }// an error occurred
+        else {
+            var temp = JSON.parse(data.Body.toString());
+            if(temp.alarmid=="")
+            {
+
+            }
+            else
+            {
+                cancelalarm(temp.alarmid,localdata)
+                console.log(data.Body.toString());
+            }
+
+        }
+    })
+
+}
+
+function cancelalarm(alaarmid,requestdata)
+{
+    //console.log(id)
+    // var result  = JSON.parse(jsondatau);
+
+    //build path for url
+    pathtitle = '/v1/alarms/' + alaarmid.toString() + '/status'
+
+    var options = {
+        host: 'api-sandbox.safetrek.io',
+        port: 443,
+        path: pathtitle,
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'Content-Length': requestdata.length,
+            'Authorization': "Bearer " + accesstoken
+        }
+    };
+
+    var updaterequest = https.request(options, function(res) {
+        res.setEncoding('utf8');
+
+        res.on('data', function (chunk) {
+            console.log(chunk);
+            if(res.statusCode===200)
+            {
+                var result = '{"value":"11"}';
+                sendanswer(11,result);
+                console.log("cancelled");
+            }
+
+        });
+        
+
+        res.on('error', function (e){
+            console.log(e.message);
+            sendanswer(99,{"value":"99"});
+        });
+
+    });
+
+
+
+    updaterequest.write(requestdata);
+    updaterequest.end();
+
+}
+
+// this is the end
+
+
+
 
 
 // this gets an arguement of a json data of the user request
