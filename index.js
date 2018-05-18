@@ -401,6 +401,7 @@ const server = http.createServer(function (req,res) {
                     var tempx = JSON.parse(chunk);
                     //accesstoken = tempx.acess_token;
                     //console.log( + "yaaaa");
+                    console.log(chunk);
                     console.log("edeed4d4:" + tempx.access_token);
                     accesstoken = tempx.access_token
 
