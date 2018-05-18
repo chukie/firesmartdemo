@@ -573,7 +573,7 @@ const server = http.createServer(function (req,res) {
                     var temp = JSON.parse(data.Body.toString());
                     if(temp.alarmid=="")
                     {
-
+                        sendanswer(11,{"value":"alarm has been canceled"});
                     }
                     else
                     {
@@ -611,12 +611,9 @@ const server = http.createServer(function (req,res) {
 
                 res.on('data', function (chunk) {
                     console.log(chunk);
-                    if(res.statusCode===200)
-                    {
                         var result = '{"value":"11"}';
                         sendanswer(11,result);
                         console.log("cancelled");
-                    }
 
                 });
 
