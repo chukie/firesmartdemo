@@ -329,7 +329,7 @@ const server = http.createServer(function (req,res) {
                                     }
                                     else
                                     {
-                                        buildupdaterequest();
+                                        refreshapi();
 
                                     }
                                 });
@@ -630,7 +630,7 @@ function cancelalarm(alaarmid,requestdata)
             }
 
         });
-        
+
 
         res.on('error', function (e){
             console.log(e.message);
