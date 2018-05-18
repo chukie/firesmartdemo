@@ -371,7 +371,6 @@ const server = http.createServer(function (req,res) {
         function refreshapi()
         {
             var dwd = '{"grant_type" : "refresh_token" , "client_id":"' + process.env.safetrek_clientid + '", "client_secret":"' + process.env.safetrek_clientsecret + '", "refresh_token":"' + process.env.safetrek_refreshtoken + '"}';
-            console.log(dwd);
             dwfwef(dwd);
         }
 
@@ -550,7 +549,93 @@ const server = http.createServer(function (req,res) {
         }
 
 
+
+
             // the end of create alarm
+
+
+        // this is the beginning of the coding of cancel alarm proccess
+
+        function buildupdaterequest()
+        {
+            var localdata = JSON.stringify({
+                "status": "CANCELED",
+                "pin": "7562"
+            })
+
+            s3.getObject({Bucket: "firesmartdemodb",Key: 'alarmid.json'}, function (err, data) {
+                if (err) {
+                    console.log(err, err.stack);
+                    console.log("bad");
+                    usercode = 99;
+                }// an error occurred
+                else {
+                    var temp = JSON.parse(data.Body.toString());
+                    if(temp.alarmid=="")
+                    {
+
+                    }
+                    else
+                    {
+                        cancelalarm(temp.alarmid,localdata)
+                        console.log(data.Body.toString());
+                    }
+
+                }
+            })
+
+        }
+
+        function cancelalarm(alaarmid,requestdata)
+        {
+            //console.log(id)
+            // var result  = JSON.parse(jsondatau);
+
+            //build path for url
+            pathtitle = '/v1/alarms/' + alaarmid.toString() + '/status'
+
+            var options = {
+                host: 'api-sandbox.safetrek.io',
+                port: 443,
+                path: pathtitle,
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Content-Length': requestdata.length,
+                    'Authorization': "Bearer " + accesstoken
+                }
+            };
+
+            var updaterequest = https.request(options, function(res) {
+                res.setEncoding('utf8');
+
+                res.on('data', function (chunk) {
+                    console.log(chunk);
+                    if(res.statusCode===200)
+                    {
+                        var result = '{"value":"11"}';
+                        sendanswer(11,result);
+                        console.log("cancelled");
+                    }
+
+                });
+
+
+                res.on('error', function (e){
+                    console.log(e.message);
+                    sendanswer(99,{"value":"99"});
+                });
+
+            });
+
+
+
+            updaterequest.write(requestdata);
+            updaterequest.end();
+
+        }
+
+        // this is the end
 
 
 
@@ -568,88 +653,7 @@ const server = http.createServer(function (req,res) {
 
 
 
-// this is the beginning of the coding of cancel alarm proccess
 
-function buildupdaterequest()
-{
-    var localdata = JSON.stringify({
-        "status": "CANCELED",
-        "pin": "7562"
-    })
-
-    s3.getObject({Bucket: "firesmartdemodb",Key: 'alarmid.json'}, function (err, data) {
-        if (err) {
-            console.log(err, err.stack);
-            console.log("bad");
-            usercode = 99;
-        }// an error occurred
-        else {
-            var temp = JSON.parse(data.Body.toString());
-            if(temp.alarmid=="")
-            {
-
-            }
-            else
-            {
-                cancelalarm(temp.alarmid,localdata)
-                console.log(data.Body.toString());
-            }
-
-        }
-    })
-
-}
-
-function cancelalarm(alaarmid,requestdata)
-{
-    //console.log(id)
-    // var result  = JSON.parse(jsondatau);
-
-    //build path for url
-    pathtitle = '/v1/alarms/' + alaarmid.toString() + '/status'
-
-    var options = {
-        host: 'api-sandbox.safetrek.io',
-        port: 443,
-        path: pathtitle,
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json',
-            'Content-Length': requestdata.length,
-            'Authorization': "Bearer " + accesstoken
-        }
-    };
-
-    var updaterequest = https.request(options, function(res) {
-        res.setEncoding('utf8');
-
-        res.on('data', function (chunk) {
-            console.log(chunk);
-            if(res.statusCode===200)
-            {
-                var result = '{"value":"11"}';
-                sendanswer(11,result);
-                console.log("cancelled");
-            }
-
-        });
-
-
-        res.on('error', function (e){
-            console.log(e.message);
-            sendanswer(99,{"value":"99"});
-        });
-
-    });
-
-
-
-    updaterequest.write(requestdata);
-    updaterequest.end();
-
-}
-
-// this is the end
 
 
 
