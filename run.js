@@ -4,8 +4,8 @@ var env = require('dotenv');
 var AWS = require('aws-sdk');
 
 AWS.config = new AWS.Config();
-AWS.config.accessKeyId = "AKIAJBA5SVLFJIVD2CGA";
-AWS.config.secretAccessKey = "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";
+AWS.config.accessKeyId = "";
+AWS.config.secretAccessKey = "";
 
 var s3 = new AWS.S3();
 
@@ -33,7 +33,7 @@ refreshapi();
 
 function refreshapi()
 {
- var dwd = '{"grant_type" : "refresh_token" , "client_id": "gk1nFtbQr4pBpJD0rzAp3vaSi555sm4s"  , "client_secret": "eWTSj_izMvD3nBJFXxkRDZF4aXDGKofYRZyzw_31oer31kuoY6-OVDs27nEHJu0B", "refresh_token": "kvWr0ozajMrLBD3PHeSXWrsTJMuYm0GnzvH0w4hubybWE"}';
+ var dwd = '{"grant_type" : "refresh_token" , "client_id": ""  , "client_secret": "", "refresh_token": ""}';
  dwfwef(dwd);
 }
 
@@ -142,7 +142,7 @@ function SendDatatoSafeTrek(builtrequest)
         headers: {
             'Content-Type': 'application/json',
             'Content-Length': Buffer.byteLength(builtrequest),
-            'Authorization' : "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Ik5FWTBPVVV3TVRSRU5qUTRSVUZDTkVJd01rUTBSVEUwUVRJMFF6ZzRSVGc1T0RBMFJEWXhOUSJ9.eyJodHRwOi8vY2xpZW50LW5hbWUiOiJDT0xMRUdFX0RFVkVMT1BFUl9QUk9HUkFNIiwiaXNzIjoiaHR0cHM6Ly9sb2dpbi1zYW5kYm94LnNhZmV0cmVrLmlvLyIsInN1YiI6InNtc3w1YWU0OTZhYWE2ODAzYTkxOTEzNWRiNDYiLCJhdWQiOlsiaHR0cHM6Ly9hcGktc2FuZGJveC5zYWZldHJlay5pbyIsImh0dHBzOi8vc2FmZXRyZWstc2FuZGJveC5hdXRoMC5jb20vdXNlcmluZm8iXSwiaWF0IjoxNTI2NDkxNzU1LCJleHAiOjE1MjY1Mjc3NTUsImF6cCI6ImdrMW5GdGJRcjRwQnBKRDByekFwM3ZhU2k1NTVzbTRzIiwic2NvcGUiOiJvcGVuaWQgcGhvbmUgb2ZmbGluZV9hY2Nlc3MifQ.pKRC-htaCj0glgLr-mBntzZLllwx4d4-SinXH3mFvqduJH2VMNq8oQs_DpXs_k9zdIkOhiXCMLQTIFg-N0bPGjBzWCgvaI_7w9h3l0zV62dQcFMGjeATIhP5riyajQbxvwEsq_wL4JPD1xRPznX2ae80e4CTTg6UcCtVRc-Alg8PswYpZA670Vn0jO0a-xQ0iZc-48XrO1xP0LODfKiGFXUFWKVGe3HG76uDZM9LIEdYlr7_nUMcZx_jbCy19aUaX1lNUFNCl8Y-3lMcWIQcL6JVh7LytmQlYSVcgqsZgM3d67Amegi_77aKgim1c9Aa95v0SrnJfI9nE3zA_BJ4mw"
+            'Authorization' : "Bearer "
         }
 
     }
@@ -238,7 +238,7 @@ function cancelalarm(alaarmid,requestdata)
         headers: {
             'Content-Type': 'application/json',
             'Content-Length': requestdata.length,
-            'Authorization': "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Ik5FWTBPVVV3TVRSRU5qUTRSVUZDTkVJd01rUTBSVEUwUVRJMFF6ZzRSVGc1T0RBMFJEWXhOUSJ9.eyJodHRwOi8vY2xpZW50LW5hbWUiOiJDT0xMRUdFX0RFVkVMT1BFUl9QUk9HUkFNIiwiaXNzIjoiaHR0cHM6Ly9sb2dpbi1zYW5kYm94LnNhZmV0cmVrLmlvLyIsInN1YiI6InNtc3w1YWU0OTZhYWE2ODAzYTkxOTEzNWRiNDYiLCJhdWQiOlsiaHR0cHM6Ly9hcGktc2FuZGJveC5zYWZldHJlay5pbyIsImh0dHBzOi8vc2FmZXRyZWstc2FuZGJveC5hdXRoMC5jb20vdXNlcmluZm8iXSwiaWF0IjoxNTI2NDkxNzU1LCJleHAiOjE1MjY1Mjc3NTUsImF6cCI6ImdrMW5GdGJRcjRwQnBKRDByekFwM3ZhU2k1NTVzbTRzIiwic2NvcGUiOiJvcGVuaWQgcGhvbmUgb2ZmbGluZV9hY2Nlc3MifQ.pKRC-htaCj0glgLr-mBntzZLllwx4d4-SinXH3mFvqduJH2VMNq8oQs_DpXs_k9zdIkOhiXCMLQTIFg-N0bPGjBzWCgvaI_7w9h3l0zV62dQcFMGjeATIhP5riyajQbxvwEsq_wL4JPD1xRPznX2ae80e4CTTg6UcCtVRc-Alg8PswYpZA670Vn0jO0a-xQ0iZc-48XrO1xP0LODfKiGFXUFWKVGe3HG76uDZM9LIEdYlr7_nUMcZx_jbCy19aUaX1lNUFNCl8Y-3lMcWIQcL6JVh7LytmQlYSVcgqsZgM3d67Amegi_77aKgim1c9Aa95v0SrnJfI9nE3zA_BJ4mw"
+            'Authorization': ""
         }
     };
 
