@@ -401,8 +401,8 @@ const server = http.createServer(function (req,res) {
                     var tempx = JSON.parse(chunk);
                     //accesstoken = tempx.acess_token;
                     //console.log( + "yaaaa");
-                    console.log(chunk);
-                    console.log("edeed4d4:" + tempx.access_token);
+                    //console.log(chunk);
+                    console.log("The access token has been retrieved");
                     accesstoken = tempx.access_token
 
                     if(puserdata.requesttype=="cancelalarm")
@@ -476,10 +476,9 @@ const server = http.createServer(function (req,res) {
                 }
             })
 
-            console.log("success on stringifying data ");
+            console.log("Address data has been fetched from aws ");
             SendDatatoSafeTrek(data);
         }
-
 
 
 // The function senddatatosafetrek api , builds a post request from the arguemnts and sends it to 911 at safetrek api
@@ -518,6 +517,7 @@ const server = http.createServer(function (req,res) {
                 res.on('error', function (e){
                     console.log(e.message);
                     console.log("it is from the error bro");
+                    sendanswer(99,{"error":"there has been an error connecting to safe trek api "});
                 });
 
             });
@@ -541,13 +541,12 @@ const server = http.createServer(function (req,res) {
                     {
                         var result = '{"11":"Successfully called 911"}';
                         sendanswer(11,result);
-                        console.log("updated alarm id to current ");
+                        console.log("saved the alarm id  to the database for future to be cancelled");
                     }
                 });
 
 
         }
-
 
 
 
@@ -568,6 +567,7 @@ const server = http.createServer(function (req,res) {
                     console.log(err, err.stack);
                     console.log("bad");
                     usercode = 99;
+                    sendanswer(99,{"error":"couldnt connect to aws for some reason we cant say"})
                 }// an error occurred
                 else {
                     var temp = JSON.parse(data.Body.toString());
@@ -646,13 +646,6 @@ const server = http.createServer(function (req,res) {
 
 
 });
-
-
-
-
-
-
-
 
 
 
