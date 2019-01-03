@@ -10,12 +10,19 @@ const port = process.env.PORT || 5000;
 //console.log(process.env.GAME);
 
 
+// copyright 2018 Neuion by chukwudi udoka
+//
+
 AWS.config = new AWS.Config();
 AWS.config.accessKeyId = process.env.S3_KEY
 AWS.config.secretAccessKey = process.env.S3_SECRET;
+var safetrekpin = process.env.safe_trekpin;
+var safetrek_clientid = process.env.safetrek_clientid;
+var safetrek_clientsecret = process.env.safetrek_clientsecret;
+var refreshtoken = process.env.safetrek_refreshtoken;
 
 
-
+// This add add a s3 sdk object to the project
 var s3 = new AWS.S3();
 
 var params = {Bucket: "firesmartdemodb",Key: 'defaultdabase.json'};
@@ -35,24 +42,19 @@ const server = http.createServer(function (req,res) {
 
     var requestdatatest = '';
 
-    //{"userkey":"wfwrgegttrhrthr","requesttype":"temperature"}
 
 
     var advancedverifcareq = false ; // this is used to check if the advanced validation acess required
 
-    var startvalidation = false;
+    var startvalidation = false; // this is used to check if the the validtaion should be started , that is the http request parameters ahve been validated
 
-    var jsonuserresponse = null;
+    var jsonuserresponse = null; // After the response
 
     var responseready = false;
 
     var reqtype = null;
 
-    //console.log(req.method);
-    //console.log(req.headers);
-   // res.statusCode = 200;
-   // res.setHeader('Content-Type', 'text/plain');
-   // res.end('Hello World\n');
+
 
 
     if(req.method=='POST')
@@ -70,11 +72,15 @@ const server = http.createServer(function (req,res) {
         requestdatatest += chunk.toString(); // convert Buffer to string
     });
     req.on('end', () => {
-        dff();
+
+        //The function is called  when the sever finishing converting the buffer to string and the http headers are fully received
+        startprocessing();
     });
 
-    function dff() {
+    function startprocessing() {
 
+        // This defines the routh path for the server
+        // it process the request to give to the server
 
 
         if (req.url == "/") {
@@ -233,8 +239,8 @@ const server = http.createServer(function (req,res) {
 
         function procesuserjsonrequest()
         {
-// this codes checks wants the user wants from the database and returns the result
-// this should be a client call to amazon aws or redis service in which json file is downloaded as a string and parsed
+            // this codes checks wants the user wants from the database and returns the result
+            // this should be a client call to amazon aws or redis service in which json file is downloaded as a string and parsed
 
             //var s3 = new AWS.S3();
             var currentdata = "";
@@ -368,13 +374,15 @@ const server = http.createServer(function (req,res) {
         }
 
         // create a new access token
+        // due to safe trek api oauth2 authentication , an access token is needed every 24 hours, but instead of making extra calls to database
+        // this server request new refresh token everytime to get new token
         function refreshapi()
         {
-            var dwd = '{"grant_type" : "refresh_token" , "client_id":"' + process.env.safetrek_clientid + '", "client_secret":"' + process.env.safetrek_clientsecret + '", "refresh_token":"' + process.env.safetrek_refreshtoken + '"}';
-            dwfwef(dwd);
+            var requestfornewaccestoken = '{"grant_type" : "refresh_token" , "client_id":"' + safetrek_clientid + '", "client_secret":"' + safetrek_clientsecret + '", "refresh_token":"' + refreshtoken + '"}';
+            requestaccestoken(requestfornewaccestoken);
         }
 
-        function dwfwef(builtrequest)
+        function requestaccestoken(builtrequest)
         {
 
             // build the header of the post request
@@ -390,20 +398,19 @@ const server = http.createServer(function (req,res) {
 
             }
 
-
-            var result = "";
-
             var sendrequest = https.request(headermessages, function(res) {
                 res.setEncoding('utf8');
 
                 res.on('data', function (chunk) {
 
+                    // when data has started coming in
+
                     var tempx = JSON.parse(chunk);
-                    //accesstoken = tempx.acess_token;
-                    //console.log( + "yaaaa");
-                    //console.log(chunk);
                     console.log("The access token has been retrieved");
                     accesstoken = tempx.access_token
+
+                    // after the accestoken has been received , move unto other part based on what the request wants to do
+
 
                     if(puserdata.requesttype=="cancelalarm")
                     {
@@ -411,8 +418,8 @@ const server = http.createServer(function (req,res) {
                     }
                     else
                     {
-
-                    beginalarmcreation();
+                        // this calls the function to create new alarm
+                        beginalarmcreation();
 
                     }
 
@@ -422,8 +429,9 @@ const server = http.createServer(function (req,res) {
 
 
                 res.on('error', function (e){
-                    sendanswer(99,"there was a problem");
+                    sendanswer(99,"there was a problem with getting an error token ");
                     console.log(e.message);
+                    console.log("Error , access token could not gotten from safe trek api ");
                 });
 
             });
@@ -446,12 +454,15 @@ const server = http.createServer(function (req,res) {
         {
             s3.getObject(params, function (err, data) {
                 if (err) {
+
+                    // an error occurred;
                     console.log(err, err.stack);
-                    console.log("bad");
+                    console.log("call to s3 bucket could not initiate ");
                     usercode = 99;
-                }// an error occurred
+                }
                 else {
-                    console.log("calling 911 started");
+                    //console.log("Successfully connected to s3 buckets");
+                    // The user inofrmation is gotten from the s3 bucket , which contains json data of user address, zip code and info contained in a typical addresss
                     var datatosend = JSON.parse(data.Body.toString());
                     buildrequest(datatosend);
 
@@ -460,6 +471,7 @@ const server = http.createServer(function (req,res) {
         }
         function buildrequest(jsondata)
         {
+            // this builds the json formart required to build an alarm in safetrek api
 
             var data = JSON.stringify({
                 "services": {
@@ -476,16 +488,13 @@ const server = http.createServer(function (req,res) {
                 }
             })
 
-            console.log("Address data has been fetched from aws ");
             SendDatatoSafeTrek(data);
         }
 
 
-// The function senddatatosafetrek api , builds a post request from the arguemnts and sends it to 911 at safetrek api
-
         function SendDatatoSafeTrek(builtrequest)
         {
-
+            // The function senddatatosafetrek api , builds a post request from the arguemnts and sends it to 911 at safetrek api
             // build the header of the post request
             var headermessages = {
                 host : "api-sandbox.safetrek.io",
@@ -501,23 +510,19 @@ const server = http.createServer(function (req,res) {
             }
 
 
-            var result = "";
-
             var sendrequest = https.request(headermessages, function(res) {
                 res.setEncoding('utf8');
 
                 res.on('data', function (chunk) {
                     console.log('successfully called 911');
-                    console.log(chunk);
                     saveidtodatabase(chunk);
 
-                    //buildupdaterequest()
 
                 });
                 res.on('error', function (e){
                     console.log(e.message);
-                    console.log("it is from the error bro");
-                    sendanswer(99,{"error":"there has been an error connecting to safe trek api "});
+                    console.log("The request was not sent properly , check the headers, make sure the json was formatted well and make sure the right safe trek api are used");
+                    sendanswer(99,{"error":"There has been an error connecting to safe trek api "});
                 });
 
             });
@@ -529,13 +534,20 @@ const server = http.createServer(function (req,res) {
         }
         function saveidtodatabase(jsonstring)
         {
+            // This function takes the json string
+            // converts it into a json object
+            // gets the id from the parsed json string
+            // this currently updates that alarmid.json file and saves the current alarm id to open
+
             var currentjs = JSON.parse(jsonstring);
             var datas = '{"alarmid":"' + currentjs.id + '"}';
             s3.putObject({Bucket: 'firesmartdemodb',Key: 'alarmid.json',Body: datas, ContentType: "application/json"},
                 function(err,data){
                     if(err)
                     {
-
+                        var result = '{"99": "Could not call 911 because alarm would not save to s3 bucket "}';
+                        console.log("error saving the alarm details to the s3 bucket ");
+                        sendanswer(99,result);
                     }
                     else
                     {
@@ -550,16 +562,17 @@ const server = http.createServer(function (req,res) {
 
 
 
-            // the end of create alarm
+        // the end of create alarm
 
 
         // this is the beginning of the coding of cancel alarm proccess
 
         function buildupdaterequest()
         {
+            // The api requires you pass a json data of your alarm status and pin
             var localdata = JSON.stringify({
                 "status": "CANCELED",
-                "pin": "7562"
+                "pin":safetrekpin
             })
 
             s3.getObject({Bucket: "firesmartdemodb",Key: 'alarmid.json'}, function (err, data) {
@@ -588,12 +601,15 @@ const server = http.createServer(function (req,res) {
 
         function cancelalarm(alaarmid,requestdata)
         {
-            //console.log(id)
-            // var result  = JSON.parse(jsondatau);
 
-            //build path for url
+            // this is the function that sends the data to safe trek (newly noonlight api )
+            // The alarm id is gotten from the aws database
+
             pathtitle = '/v1/alarms/' + alaarmid.toString() + '/status'
 
+
+            // this builds the options of the api request
+            // look up nonlight api reference docs to understand the options being paassd
             var options = {
                 host: 'api-sandbox.safetrek.io',
                 port: 443,
@@ -610,7 +626,9 @@ const server = http.createServer(function (req,res) {
                 res.setEncoding('utf8');
 
                 res.on('data', function (chunk) {
-                    console.log(chunk);
+
+                    // whenn not a 200 response sent , sendanswer (the function that handeled the post request process ) is called
+                        console.log(chunk);
                         var result = '{"value":"11"}';
                         sendanswer(11,result);
                         console.log("cancelled");
@@ -619,8 +637,10 @@ const server = http.createServer(function (req,res) {
 
 
                 res.on('error', function (e){
+                    // whenn not a 200 response sent , sendanswer (the function that handeled the post request process ) is called
                     console.log(e.message);
-                    sendanswer(99,{"value":"99"});
+                    var result = '{"value":"99"}';
+                    sendanswer(99,result);
                 });
 
             });
@@ -655,10 +675,15 @@ function extractjsondata(userdata)
 {
     puserdata = JSON.parse(userdata);
 
+    //this function parses the data the server recieves , it uses  javascript json parser
+    // then this functions checks if the required fields exist , fields such as key and typedefined
+
     var keydefined = true;
     var typedefined = true;
 
-    // checks the userkey and if the
+    // checks the userkey is defined
+
+
     if(puserdata.userkey.toString()==undefined )
     {
         keydefined == false;
@@ -685,19 +710,24 @@ function extractjsondata(userdata)
 }
 
 function advanceduservalidation(userreqjsonobject) {
+
     if (userreqjsonobject.requesttype.toString() == "temperature") {
-// make sure the temperature value is sent
+
+        // make sure the temperature value is sent
+        // the value of the temperature is stored under the key user.value
+
         if (userreqjsonobject.uservalue==undefined) {
             return 99;
         }
-    else
-    {
+        else
+        {
             return 11;
-    }
+        }
 
     }
     else if (userreqjsonobject.requesttype.toString() == "alarmstatus") {
-// make sure the alarm
+        // make sure the alarm value is sent
+        // the value of the alarm is stored under the key
         if (userreqjsonobject.uservalue==undefined) {
             return 99;
         }
@@ -709,6 +739,7 @@ function advanceduservalidation(userreqjsonobject) {
 
     else if (userreqjsonobject.requesttype.toString() == "address") {
         //make sure the address is not empty and validate if the adress details have instatitize
+        // the address have must have details of line(street no ) , city , userstte and zipcode
         if (typeof userreqjsonobject.useraddress === 'undefined')
         {
 
@@ -728,7 +759,7 @@ function advanceduservalidation(userreqjsonobject) {
         }
     }
     else if (userreqjsonobject.requesttype.toString() == "cancelalarm") {
-// make sure the alarm
+        // make sure the cancel alarm have valeu under uservalue , which can be true or false ;
         if (typeof userreqjsonobject.uservalue === 'undefined') {
             return 99;
         }
@@ -737,7 +768,6 @@ function advanceduservalidation(userreqjsonobject) {
             return 11;
         }
     }
-
     else
     {
         return 99;
