@@ -2,15 +2,16 @@ var http = require('http');
 var https = require('https');
 var url = require('url');
 var env = require('dotenv').config();
-var AWS = require('aws-sdk');
-
+var mysql = require('mysql');
+var validation = require("./advusrvalid");
 
 
 const port = process.env.PORT || 5000;
 //console.log(process.env.GAME);
 
 
-// copyright 2018 Neuion by chukwudi udoka
+
+// Declare Keys
 //
 
 AWS.config = new AWS.Config();
@@ -20,12 +21,16 @@ var safetrekpin = process.env.safe_trekpin;
 var safetrek_clientid = process.env.safetrek_clientid;
 var safetrek_clientsecret = process.env.safetrek_clientsecret;
 var refreshtoken = process.env.safetrek_refreshtoken;
+var dbname = process.env.db_name;
+var hostname = process.env.hostname;
+var password = process.env.db_password;
+var dbusername = process.env.dbusername;
 
 
-// This add add a s3 sdk object to the project
-var s3 = new AWS.S3();
-
-var params = {Bucket: "firesmartdemodb",Key: 'defaultdabase.json'};
+// end of the declaration of keys
+var userkey="";
+//var database = new calltodatabase();
+var database = new calltodatabasewithpool();
 
 
 // set the server to accept only json request
@@ -35,13 +40,16 @@ var formalrequesttype = null;
 
 var accesstoken="";
 
-const server = http.createServer(function (req,res) {
+var  jsondb = null; // this is gotten from db and is stored one , instead being called twice
 
+
+
+
+const server = http.createServer(function (req,res) {
 
     var requestdata = '';
 
     var requestdatatest = '';
-
 
 
     var advancedverifcareq = false ; // this is used to check if the advanced validation acess required
@@ -50,11 +58,9 @@ const server = http.createServer(function (req,res) {
 
     var jsonuserresponse = null; // After the response
 
-    var responseready = false;
+    var responseready = false; // this is used when
 
-    var reqtype = null;
-
-
+    var reqtype = null; // the type of request , whether access , action ..etc check docs
 
 
     if(req.method=='POST')
@@ -77,7 +83,7 @@ const server = http.createServer(function (req,res) {
         startprocessing();
     });
 
-    function startprocessing() {
+     async function startprocessing() {
 
         // This defines the routh path for the server
         // it process the request to give to the server
@@ -107,12 +113,13 @@ const server = http.createServer(function (req,res) {
         }
         else
         {
+            // this is the path that uses get
             var query  = url.parse(req.url,true);
             var modes = query.query;
             if(typeof modes.userkey === 'undefined' || typeof modes.requesttype === 'undefined')
             {
                 responseready = true;
-                sendanswer(99,"userkey has to be defined");
+                sendanswer(99,'{"value":"99","message":"userkey has to be defined"}');
             }
             else
             {
@@ -132,7 +139,7 @@ const server = http.createServer(function (req,res) {
                 if(typeof modes.uservalue === 'undefined')
                 {
                     responseready = true;
-                    sendanswer(99,"uservalue has to be defined");
+                    sendanswer(99,'{"value":"99","message":"uservalue has to be defined"}');
                 }
                 else
                 {
@@ -149,7 +156,7 @@ const server = http.createServer(function (req,res) {
                 if(typeof modes.uservalue === 'undefined')
                 {
                     responseready = true;
-                    sendanswer(99,"uservalue has to be defined");
+                    sendanswer(99,'{"value":"99","message":"userkey has to be defined"}');
                 }
                 else {
                     formalrequesttype = "action";
@@ -166,6 +173,7 @@ const server = http.createServer(function (req,res) {
                 responseready = true;
                 sendanswer(99,"invalid url");
             }
+
             }
 
         }
@@ -174,16 +182,14 @@ const server = http.createServer(function (req,res) {
 
 
         if (startvalidation) {
-            if (requestdatatest.length == 0) {
-                if(reqtype)
-                {
 
-                    requestdata = '{"userkey":"wfwrgegttrhrthr","requesttype":"cancelalarm","uservalue":"off","useraddress":{"line":"wfwrgegttrhrthr","city":"fverge","userstate":"wfwrgegttrhrthr","zipcode":"address"},"cancelalarm":"false"}';
-                }
-                else {
-                    console.log('Default');
-                    requestdata = '{"userkey":"wfwrgegttrhrthr","requesttype":"cancelalarm","uservalue":"off","useraddress":{"line":"wfwrgegttrhrthr","city":"fverge","userstate":"wfwrgegttrhrthr","zipcode":"address"},"cancelalarm":"false"}';
-                }
+
+            if (requestdatatest.length == 0) {
+
+                // this is used for when there is no json data sent to the server , the server automatically createsa json , this is used for testing
+                    console.log('Testing enviroment initialized');
+                    requestdata = '{"userkey":"65","requesttype":"cancelalarm","uservalue":"true","useraddress":{"line":"403 torry avenue","city":"bronx","userstate":"new york","zipcode":"10473"},"cancelalarm":"true"}';
+
             }
             else {
                 console.log("userset");
@@ -191,12 +197,94 @@ const server = http.createServer(function (req,res) {
             }
 
 
-            var validationcode = extractjsondata(requestdata);
+            //var validationcode = extractjsondata(requestdata);
+
+            var validationcode = 0o1;
+
+            // *********  ***  ** The beginnning of async task , the beginning of async Task , The beginning of async Task **************
+
+
+            puserdata = JSON.parse(requestdata);
+
+            //this function parses the data the server recieves , it uses  javascript json parser
+            // then this functions checks if the required fields exist , fields such as key and typedefined
+
+            var keydefined = true;
+            var typedefined = true;
+
+
+
+            if(!(typeof puserdata.requesttype === 'undefined' || puserdata.requesttype == "alarmstatus" || puserdata.requesttype == "temperature" || puserdata.requesttype== "address" || puserdata.requesttype == "wifi"  || puserdata.requesttype == "cancelalarm" || puserdata.requesttype == "call911"))
+            {
+                // this checks if the request type is defined in the user json request
+                typedefined= false;
+            }
+
+
+            let promise = new Promise((resolve, reject) => {
+
+                if(typeof puserdata.userkey== "undefined")
+                {
+                    resolve(false);
+                }
+                else
+                {
+                    var dbdata = [puserdata.userkey];
+                    database.runquery('SELECT * FROM fsusers WHERE userkey=?',dbdata, function (err,results,fields)
+                    {
+                        // this is the call back for when the query is ran
+                        if(err)
+                        {
+                            resolve(false);
+                            console.log(err.message);
+                        }
+                        else
+                        {
+                            if(results.length==0)
+                            {
+                                //keydefined=false;
+                                validationcode=99;
+                                resolve(false);
+                            }
+                            else
+                            {
+                                //console.log(results[0]);
+                                resolve(true);
+                                jsondb = results[0];
+                                userkey=results[0].userkey;
+
+                            }
+
+                        }
+                    });
+                }
+
+
+
+
+            }  );
+
+            keydefined = await promise; // this means wait for the data to be fetched from the database
+
+            if(keydefined == true && typedefined == true)
+            {
+                validationcode = 11; // 11 is a code for when the user formatted the input right
+            }
+
+
+
+            // ************ THE END of async Task block *****
 
 
             // check if the code is validated
-            if (validationcode == 99) {
+            if (validationcode == 99 ) {
                 jsonuserresponse = '{"error":"There is a problem with your key or the type of request you want to make "}';
+                responseready = true;
+                sendanswer(99,jsonuserresponse);
+            }
+            else if(validationcode == 0o1)
+            {
+                jsonuserresponse = '{"value":"01","message":"Could not connect to the service right now"}';
                 responseready = true;
                 sendanswer(99,jsonuserresponse);
             }
@@ -204,7 +292,9 @@ const server = http.createServer(function (req,res) {
                 // take the json data for user validation
                 if (advancedverifcareq) {
 
-                    var goahead = advanceduservalidation(puserdata); //bypass this function if its just access
+                    //required
+                    var goahead = validation.runvalidation(puserdata); //bypass this function if its just access , look at json structure to see why advanced validation is not
+                    // required
 
                     if (goahead == 11) {
                         responseready = true;
@@ -218,7 +308,7 @@ const server = http.createServer(function (req,res) {
                     }
                 }
                 else {
-                    // if advanced validation is required pocess the request
+                    // if advanced validation is not required pocess the request
                     //console.log("this is the post dat " + requestdatatest.toString());
                     responseready = true;
                     procesuserjsonrequest();
@@ -230,135 +320,115 @@ const server = http.createServer(function (req,res) {
         }
 
 
-        function getdatafromaws()
-        {
-            //this data gets result from aws
-
-        }
-
-
         function procesuserjsonrequest()
         {
             // this codes checks wants the user wants from the database and returns the result
             // this should be a client call to amazon aws or redis service in which json file is downloaded as a string and parsed
 
-            //var s3 = new AWS.S3();
-            var currentdata = "";
             var result = "";
 
-            s3.getObject(params, function(err, data) {
-                if (err) {
-                    console.log(err, err.stack);
-                    console.log("bad");
-                    result = "couldnt connect to aws";
-                    sendanswer(99,result);
-                }
-                else {
-                    currentdata = JSON.parse(data.Body.toString());
                     if(formalrequesttype=="access")
                     {
                         // reads data
 
-                        result = '{"temperature":"' + currentdata.temperature + '","alarmstatus":"' + currentdata.alarmstatus + '"}';
+                        result = '{"temperature":"' + jsondb.Temperature + '","alarmstatus":"' + jsondb.Alarmstatus + '"}';
                         sendanswer(11,result);
 
                     }
-
                     else if(formalrequesttype=="insert")
                     {
                         if(puserdata.requesttype=="temperature")
                         {
-                            currentdata.temperature=puserdata.uservalue;
-                            s3.putObject({Bucket: 'firesmartdemodb',Key: 'defaultdabase.json',Body: JSON.stringify(currentdata), ContentType: "application/json"},
-                                function(err,data){
-                                    if(err)
-                                    {
-                                        sendanswer(99,"could not connect to amazon aws");
-                                    }
-                                    else
-                                    {
-                                        result = '{"value":"11"}';
-                                        sendanswer(11,result);
-                                    }
-                                });
+                            jsondb.Temperature=puserdata.uservalue;
+                            var aquery= 'UPDATE fsusers SET Temperature =? WHERE userkey=?';
+                            var values = [jsondb.Temperature,userkey];
+                            database.runquery(aquery,values,function (err,results,fields) {
+                                if(err)
+                                {
+
+                                    result = '{"value":"01","message":"could not connect to the service right now "}';
+                                    console.log(err.message);
+                                    sendanswer(0o1,result);
+
+                                    //throw error;
+                                }
+                                else
+                                {
+                                    result = '{"value":"11"}';
+                                    sendanswer(11,result);
+                                }
+
+
+                            });
 
                         }
                         else if(puserdata.requesttype=="alarmstatus")
                         {
-                            currentdata.alarmstatus=puserdata.uservalue;
-                            s3.putObject({Bucket: 'firesmartdemodb',Key: 'defaultdabase.json',Body: JSON.stringify(currentdata), ContentType: "application/json"},
-                                function(err,data){
-                                    if(err)
-                                    {
-                                        sendanswer(99,"could not connect to amazon aws");
-                                    }
-                                    else
-                                    {
-                                        result = '{"value":"11"}';
-                                        sendanswer(11,result);
-                                    }
-                                });
+                            jsondb.Alarmstatus=puserdata.uservalue;
+                            var aquery= 'UPDATE fsusers SET Alarmstatus =? WHERE userkey=?';
+                            var values = [jsondb.Alarmstatus,userkey];
+                            database.runquery(aquery,values,function (err,results,fields) {
+                                if(err)
+                                {
+                                    result = '{"value":"01","message":"could not connect to the service right now "}';
+                                    console.log(err.message);
+                                    sendanswer(0o1,result);
+                                    //throw error;
+                                }
+                                else
+                                {
+                                    result = '{"value":"11"}';
+                                    sendanswer(11,result);
+
+                                }
+
+                            });
                         }
                         else if(puserdata.requesttype=="address")
                         {
-                            currentdata.useraddress.line=puserdata.useraddress.line;
-                            currentdata.useraddress.city=puserdata.useraddress.city;
-                            currentdata.useraddress.userstate=puserdata.useraddress.userstate;
-                            currentdata.useraddress.zipcode=puserdata.useraddress.zipcode;
+                            jsondb.Line=puserdata.useraddress.line;
+                            jsondb.City=puserdata.useraddress.city;
+                            jsondb.state=puserdata.useraddress.userstate;
+                            jsondb.zipcode=puserdata.useraddress.zipcode;
 
-                            s3.putObject({Bucket: 'firesmartdemodb',Key: 'defaultdabase.json',Body: JSON.stringify(currentdata), ContentType: "application/json"},
-                                function(err,data){
-                                    if(err)
-                                    {
-                                        sendanswer(99,"could not connect to amazon aws");
-                                    }
-                                    else
-                                    {
-                                        result = '{"value":"11"}';
-                                        sendanswer(11,result);
-                                    }
-                                });
+                            var aquery= 'UPDATE fsusers SET Line = ?,City = ?,state = ?,zipcode = ?  WHERE userkey=?';
+                            var values = [jsondb.Line,jsondb.City,jsondb.state,jsondb.zipcode,userkey];
+                            database.runquery(aquery,values,function (err,results,fields) {
+                                if(err)
+                                {
+                                    result = '{"value":"01","message":"could not connect to the service right now "}';
+                                    console.log(err.message);
+                                    sendanswer(0o1,result);
+                                    //throw error;
+                                }
+                                else
+                                {
+                                    result = '{"value":"11"}';
+                                    sendanswer(11,result);
+                                }
+
+
+                            });
+
+                        }
+                        else
+                        {
+
                         }
 
                     }
                     else
                     {
-                        if(puserdata.requesttype=="cancelalarm")
-                        {
-                            currentdata.cancelalarm=puserdata.uservalue;
-                            currentdata.alarmstatus="off";
-                            s3.putObject({Bucket: 'firesmartdemodb',Key: 'defaultdabase.json',Body: JSON.stringify(currentdata), ContentType: "application/json"},
-                                function(err,data){
-                                    if(err)
-                                    {
-                                        sendanswer(99,"could not connect to amazon aws");
-                                    }
-                                    else
-                                    {
-                                        refreshapi();
-
-                                    }
-                                });
-
-                        }
-                        else
-                        {
-                            //beginalarmcreation();
-                            refreshapi()
-                        }
+                        refreshapi();
                     }
 
 
-                }
-
-            });
-
-                    // handle when the data is sent
 
         }
 
         function sendanswer(inid,data)
         {
+            // this is  used to send a response back to the user
             if (responseready) {
                 res.statusCode = 200;
                 res.setHeader('Content-Type', 'application/json');
@@ -378,7 +448,7 @@ const server = http.createServer(function (req,res) {
         // this server request new refresh token everytime to get new token
         function refreshapi()
         {
-            var requestfornewaccestoken = '{"grant_type" : "refresh_token" , "client_id":"' + safetrek_clientid + '", "client_secret":"' + safetrek_clientsecret + '", "refresh_token":"' + refreshtoken + '"}';
+            var requestfornewaccestoken = '{"grant_type" : "refresh_token" , "client_id":"' + safetrek_clientid + '", "client_secret":"' + safetrek_clientsecret + '", "refresh_token":"' + safetrek_refreshtoken + '"}';
             requestaccestoken(requestfornewaccestoken);
         }
 
@@ -386,6 +456,7 @@ const server = http.createServer(function (req,res) {
         {
 
             // build the header of the post request
+            // ana access tokenhas to be gotten everytime because of the oath2 authentication model
             var headermessages = {
                 host : "login-sandbox.safetrek.io",
                 port : "443",
@@ -407,7 +478,7 @@ const server = http.createServer(function (req,res) {
 
                     var tempx = JSON.parse(chunk);
                     console.log("The access token has been retrieved");
-                    accesstoken = tempx.access_token
+                    accesstoken = tempx.access_token;
 
                     // after the accestoken has been received , move unto other part based on what the request wants to do
 
@@ -419,7 +490,7 @@ const server = http.createServer(function (req,res) {
                     else
                     {
                         // this calls the function to create new alarm
-                        beginalarmcreation();
+                        buildrequest(jsondb);
 
                     }
 
@@ -446,32 +517,13 @@ const server = http.createServer(function (req,res) {
         //
 
 
-        // reply the client with response
-        //make sure the result is ready because of the callback chain
 
         // Beginning of create alarm
-        function beginalarmcreation()
-        {
-            s3.getObject(params, function (err, data) {
-                if (err) {
 
-                    // an error occurred;
-                    console.log(err, err.stack);
-                    console.log("call to s3 bucket could not initiate ");
-                    usercode = 99;
-                }
-                else {
-                    //console.log("Successfully connected to s3 buckets");
-                    // The user inofrmation is gotten from the s3 bucket , which contains json data of user address, zip code and info contained in a typical addresss
-                    var datatosend = JSON.parse(data.Body.toString());
-                    buildrequest(datatosend);
-
-                }
-            })
-        }
         function buildrequest(jsondata)
         {
             // this builds the json formart required to build an alarm in safetrek api
+            // check safetrek api to get aquintted how to format the api
 
             var data = JSON.stringify({
                 "services": {
@@ -480,11 +532,11 @@ const server = http.createServer(function (req,res) {
                     "medical": false
                 },
                 "location.address": {
-                    "line1": jsondata.useraddress.line,
+                    "line1": jsondb.Line,
                     "line2": "",
-                    "city": jsondata.useraddress.city,
-                    "state": jsondata.useraddress.userstate,
-                    "zip":  jsondata.useraddress.zipcode,
+                    "city": jsondb.City,
+                    "state": jsondb.state,
+                    "zip":  "10473",
                 }
             })
 
@@ -515,6 +567,7 @@ const server = http.createServer(function (req,res) {
 
                 res.on('data', function (chunk) {
                     console.log('successfully called 911');
+                    console.log(chunk);
                     saveidtodatabase(chunk);
 
 
@@ -522,7 +575,7 @@ const server = http.createServer(function (req,res) {
                 res.on('error', function (e){
                     console.log(e.message);
                     console.log("The request was not sent properly , check the headers, make sure the json was formatted well and make sure the right safe trek api are used");
-                    sendanswer(99,{"error":"There has been an error connecting to safe trek api "});
+                    sendanswer(0o1,'{"value":"01","message":"There has been an error connecting to the service"}');
                 });
 
             });
@@ -539,23 +592,26 @@ const server = http.createServer(function (req,res) {
             // gets the id from the parsed json string
             // this currently updates that alarmid.json file and saves the current alarm id to open
 
+            var result;
+
             var currentjs = JSON.parse(jsonstring);
-            var datas = '{"alarmid":"' + currentjs.id + '"}';
-            s3.putObject({Bucket: 'firesmartdemodb',Key: 'alarmid.json',Body: datas, ContentType: "application/json"},
-                function(err,data){
-                    if(err)
-                    {
-                        var result = '{"99": "Could not call 911 because alarm would not save to s3 bucket "}';
-                        console.log("error saving the alarm details to the s3 bucket ");
-                        sendanswer(99,result);
-                    }
-                    else
-                    {
-                        var result = '{"11":"Successfully called 911"}';
-                        sendanswer(11,result);
-                        console.log("saved the alarm id  to the database for future to be cancelled");
-                    }
-                });
+            var values = [currentjs.id,userkey];
+
+            var bquery= 'INSERT INTO alarms (Alarmid,userkey) VALUES (?,?)';
+            database.runquery(bquery,values,function (err,results,fields) {
+                if(err){
+                    result = '{"value":"01","message":"could not connect to the service right now "}';
+                    console.log(err.message);
+                    sendanswer(0o1,result);
+                }
+                else
+                {
+                    result = '{"value":"11"}';
+                    sendanswer(11,result);
+                }
+
+
+            });
 
 
         }
@@ -575,27 +631,33 @@ const server = http.createServer(function (req,res) {
                 "pin":safetrekpin
             })
 
-            s3.getObject({Bucket: "firesmartdemodb",Key: 'alarmid.json'}, function (err, data) {
-                if (err) {
-                    console.log(err, err.stack);
-                    console.log("bad");
-                    usercode = 99;
-                    sendanswer(99,{"error":"couldnt connect to aws for some reason we cant say"})
-                }// an error occurred
-                else {
-                    var temp = JSON.parse(data.Body.toString());
-                    if(temp.alarmid=="")
+            // this checks if the alarm still exists else it actually cancels it
+
+            var values = [userkey];
+            var result;
+
+            var bquery= 'SELECT Alarmid FROM alarms WHERE userkey = ?';
+            database.runquery(bquery,values,function (err,results,fields) {
+                if(err){
+                    result = '{"value":"01","message":"could not connect to the service right now "}';
+                    console.log(err.message);
+                    sendanswer(0o1,result);
+                }
+                else
+                {
+                    if(results.length==0)
                     {
-                        sendanswer(11,{"value":"alarm has been canceled"});
+                        sendanswer(11,'{"value":"22","message":"Successfull"}');
                     }
                     else
                     {
-                        cancelalarm(temp.alarmid,localdata)
-                        console.log(data.Body.toString());
+                        cancelalarm(results[0].Alarmid,localdata);
                     }
-
                 }
-            })
+
+            });
+
+
 
         }
 
@@ -605,7 +667,7 @@ const server = http.createServer(function (req,res) {
             // this is the function that sends the data to safe trek (newly noonlight api )
             // The alarm id is gotten from the aws database
 
-            pathtitle = '/v1/alarms/' + alaarmid.toString() + '/status'
+            var pathtitle = '/v1/alarms/' + alaarmid.toString() + '/status';
 
 
             // this builds the options of the api request
@@ -627,11 +689,12 @@ const server = http.createServer(function (req,res) {
 
                 res.on('data', function (chunk) {
 
-                    // whenn not a 200 response sent , sendanswer (the function that handeled the post request process ) is called
+                    // When received alarm has been cancelled
                         console.log(chunk);
-                        var result = '{"value":"11"}';
+                        var result = '{"value":"11","message":"Alarm has been canceled"}';
                         sendanswer(11,result);
                         console.log("cancelled");
+                        updaterequestindatabase(alaarmid);
 
                 });
 
@@ -639,8 +702,8 @@ const server = http.createServer(function (req,res) {
                 res.on('error', function (e){
                     // whenn not a 200 response sent , sendanswer (the function that handeled the post request process ) is called
                     console.log(e.message);
-                    var result = '{"value":"99"}';
-                    sendanswer(99,result);
+                    var result = '{"value":"01","message":"Could not reach safe trek api"}';
+                    sendanswer(0o1,result);
                 });
 
             });
@@ -653,13 +716,23 @@ const server = http.createServer(function (req,res) {
         }
 
         // this is the end
+         function updaterequestindatabase(alarmid)
+         {
+             let localquery = "DELETE FROM alarms WHERE Alarmid=?";
+             let values = [alarmid];
+             database.runquery(localquery,values,function (err){
+                 //short call back
+                 if(err)
+                 {
+                     console.log(err.message);
+                 }
+                 else
+                 {
+                     console.log("Alarm deleted");
+                 }
 
-
-
-
-
-
-
+             })
+         }
 
 
     }
@@ -668,117 +741,29 @@ const server = http.createServer(function (req,res) {
 });
 
 
-
-// this gets an arguement of a json data of the user request
-// the purpose of this function is to open validate what the user put
-function extractjsondata(userdata)
+function calltodatabasewithpool()
 {
-    puserdata = JSON.parse(userdata);
+    // this uses pool options , which saves resources because multiple requests are going to be made with database
+    // this is the general mini class/object  we would  use to call to database
+    // this uses es5.
+    var pool = mysql.createPool({connectionLimit: 10, host: hostname ,database: dbname,user: dbusername , password: password});
 
-    //this function parses the data the server recieves , it uses  javascript json parser
-    // then this functions checks if the required fields exist , fields such as key and typedefined
-
-    var keydefined = true;
-    var typedefined = true;
-
-    // checks the userkey is defined
-
-
-    if(puserdata.userkey.toString()==undefined )
-    {
-        keydefined == false;
-    }
-    else if(typeof puserdata.requesttype === 'undefined' || puserdata.requesttype.toString()!= "alarmstatus" || puserdata.requesttype.toString()!= "temperature" || puserdata.requesttype.toString()!= "address" || puserdata.requesttype.toString()!= "wifi"  || puserdata.requesttype.toString()!= "cancelalarm" || puserdata.requesttype.toString()!= "call911")
-    {
-        typedefined== false;
-    }
-    else
+    this.runquery = function(userquery,values,callbackf)
     {
 
-    }
+        // this uses the shorthand form to create query
 
-    if(keydefined == true && typedefined == true)
-    {
-        return 11; // 11 is a code for when the user formatted the input right
+        if(values==null)
+        {
+            pool.query(userquery,callbackf);
+        }
+        else
+        {
+            pool.query(userquery,values,callbackf);
+        }
     }
-    else
-    {
-        return 99; // 99 is a code for when the user formatted one of the input wrong
-    }
-
 
 }
-
-function advanceduservalidation(userreqjsonobject) {
-
-    if (userreqjsonobject.requesttype.toString() == "temperature") {
-
-        // make sure the temperature value is sent
-        // the value of the temperature is stored under the key user.value
-
-        if (userreqjsonobject.uservalue==undefined) {
-            return 99;
-        }
-        else
-        {
-            return 11;
-        }
-
-    }
-    else if (userreqjsonobject.requesttype.toString() == "alarmstatus") {
-        // make sure the alarm value is sent
-        // the value of the alarm is stored under the key
-        if (userreqjsonobject.uservalue==undefined) {
-            return 99;
-        }
-        else
-        {
-            return 11;
-        }
-    }
-
-    else if (userreqjsonobject.requesttype.toString() == "address") {
-        //make sure the address is not empty and validate if the adress details have instatitize
-        // the address have must have details of line(street no ) , city , userstte and zipcode
-        if (typeof userreqjsonobject.useraddress === 'undefined')
-        {
-
-            return 99;
-        }
-        else
-        {
-            if(typeof userreqjsonobject.useraddress.line === 'undefined' || typeof userreqjsonobject.useraddress.city === 'undefined' || typeof userreqjsonobject.useraddress.userstate === 'undefined' || typeof userreqjsonobject.useraddress.zipcode === 'undefined')
-            {
-                return 99;
-            }
-            else
-            {
-                return 11;
-            }
-
-        }
-    }
-    else if (userreqjsonobject.requesttype.toString() == "cancelalarm") {
-        // make sure the cancel alarm have valeu under uservalue , which can be true or false ;
-        if (typeof userreqjsonobject.uservalue === 'undefined') {
-            return 99;
-        }
-        else
-        {
-            return 11;
-        }
-    }
-    else
-    {
-        return 99;
-    }
-}
-
-
-
-
-
-
 
 server.listen(port,() => {
 console.log('server running');
